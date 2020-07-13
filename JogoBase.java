@@ -116,7 +116,7 @@ class JogoBase extends JFrame {
                 if(!arrayBombas.isEmpty()){
                     for(i=0 ; i< arrayBombas.size() ; i++){
                         for(int j = 0; j < fase.arrayInimigos.size(); j++){
-                            if (new Rectangle(fase.arrayInimigos.get(j).x, fase.arrayInimigos.get(j).y,33,49).intersects(arrayBombas.get(i).getHitBox())) {
+                            if (new Rectangle(fase.arrayInimigos.get(j).x, fase.arrayInimigos.get(j).y,49,49).intersects(arrayBombas.get(i).getHitBox())) {
                                 arrayBombas.get(i).boolBloqueandoInimigo = false;
                                 boolLastBombaBlockInimigo = true;
                                 break;
