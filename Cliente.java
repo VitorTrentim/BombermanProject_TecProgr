@@ -17,9 +17,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Random;
 
-import java.net.ServerSocket;
-
-class Servidor extends Thread {
+class Cliente extends JFrame {
     //// DADOS PLAYER
     final int PERS_1 = 1, PERS_2 = 2, PERS_3 = 3, PERS_4 = 4;
     Player player1 = new Player(PERS_1);
@@ -81,31 +79,30 @@ class Servidor extends Thread {
 
     //////////////////////////////////////////////////////
 
+    public void playMusic (String caminho){
+        try{
+            File musicPath = new File(caminho);
+            AudioInputStream audioInput = AudioSystem.getAudioInputStream(musicPath);
+            Clip clip = AudioSystem.getClip();
+            clip.open(audioInput);
+            FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+            gainControl.setValue(-25.0f); // Diminui o volume
+            clip.start();
+
+        }
+        catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+    }
 
     Timer refreshModels = new Timer(25, e -> {
         int i;
         try {
-            //// Atualiza a imagem dos itens
             indexItems++;
             if (indexItems > 6)
                 indexItems = 0;
 
-            //// Atualiza a imagem da bomba
-            if (arrayBombas.size() > 0) {
-                for (i = 0; i < arrayBombas.size(); i++) {
-                    arrayBombas.get(i).indexImage++;
-                }
-            }
-
-            //// Movimenta os inimigos
-            if (fase.arrayInimigos.size() > 0) {
-                for (i = 0; i < fase.arrayInimigos.size(); i++) {
-                    fase.arrayInimigos.get(i).move();
-                }
-            }
-            
-            // Checa as bombas recém colocadas e quando elas irão bloquear os players
-            if (boolLastBombaBlockPlayer) { 
+            if (boolLastBombaBlockPlayer) { // Rotina para checar as bombas recém colocadas e quando elas irão bloquear o player
                 if (!arrayBombas.isEmpty()) {
                     if (!new Rectangle(player1.X, player1.Y + 15, 35, 40).intersects(arrayBombas.get(arrayBombas.size() - 1).getHitBox())) {
                         arrayBombas.get(arrayBombas.size() - 1).boolBloqueandoPlayer = true;
@@ -115,8 +112,6 @@ class Servidor extends Thread {
                     boolLastBombaBlockPlayer = false;
                 }
             }
-
-            // Checa as bombas recém colocadas e quando elas irão bloquear os inimigos (NPC)
             if(boolLastBombaBlockInimigo){
                 if(!arrayBombas.isEmpty()){
                     for(i=0 ; i< arrayBombas.size() ; i++){
@@ -137,281 +132,485 @@ class Servidor extends Thread {
             }
 
             //// Controlar o dano recente dos players
-            damageDelayControl();
-            
+            if(single) {
+                if (player1.boolDanoRecente) {
+                    if (player1.danoRecente++ == 0) {
+                        checkVida();
+                        scoreVida -=100;
+                        player1.personagem = player1.imagensPlayer[DANIFICADO];
+                        player1.boolStunned = true;
+                    }
+                    if (player1.danoRecente >= 20) { // numero de "ticks" de imobilização
+                        player1.boolStunned = false;
+                    }
+                    if (player1.danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
+                        player1.boolDanoRecente = false;
+                        player1.danoRecente = 0;
+                    }
+                }
+            }
+            else if(multiplay) {
+                if (player1 != null && player1.boolDanoRecente) {
+                    if (player1.danoRecente++ == 0) {
+                        checkVida();
+                        player1.personagem = player1.imagensPlayer[DANIFICADO];
+                        player1.boolStunned = true;
+                    }
+                    if (player1.danoRecente >= 20) { // numero de "ticks" de imobilização
+                        player1.boolStunned = false;
+                    }
+                    if (player1.danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
+                        player1.boolDanoRecente = false;
+                        player1.danoRecente = 0;
+                    }
+                }
+                if (player2 != null && player2.boolDanoRecente) {
+                    if (player2.danoRecente++ == 0) {
+                        checkVida();
+                        player2.personagem = player2.imagensPlayer[DANIFICADO];
+                        player2.boolStunned = true;
+                    }
+                    if (player2.danoRecente >= 20) { // numero de "ticks" de imobilização
+                        player2.boolStunned = false;
+                    }
+                    if (player2.danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
+                        player2.boolDanoRecente = false;
+                        player2.danoRecente = 0;
+                    }
+                }
+                if (player3 != null && player3.boolDanoRecente) {
+                    if (player3.danoRecente++ == 0) {
+                        checkVida();
+                        player3.personagem = player2.imagensPlayer[DANIFICADO];
+                        player3.boolStunned = true;
+                    }
+                    if (player3.danoRecente >= 20) { // numero de "ticks" de imobilização
+                        player3.boolStunned = false;
+                    }
+                    if (player3.danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
+                        player3.boolDanoRecente = false;
+                        player3.danoRecente = 0;
+                    }
+                }
+                if (player4 != null && player4.boolDanoRecente) {
+                    if (player4.danoRecente++ == 0) {
+                        checkVida();
+                        player4.personagem = player2.imagensPlayer[DANIFICADO];
+                        player4.boolStunned = true;
+                    }
+                    if (player4.danoRecente >= 20) { // numero de "ticks" de imobilização
+                        player4.boolStunned = false;
+                    }
+                    if (player4.danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
+                        player4.boolDanoRecente = false;
+                        player4.danoRecente = 0;
+                    }
+                }
+            }
+            ///////////
+            if (arrayBombas.size() > 0) {
+                for (i = 0; i < arrayBombas.size(); i++) {
+                    arrayBombas.get(i).indexImage++;
+                }
+            }
+            if (fase.arrayInimigos.size() > 0) {
+                for (i = 0; i < fase.arrayInimigos.size(); i++) {
+                    fase.arrayInimigos.get(i).move();
+                }
+            }
+            try {
+                /// Checa Colisão do player com o Item
+                if (arrayItens.size() > 0) {
+                    for (i = 0; i < arrayItens.size(); i++) {
+                        if (player1.getHitBox().intersects(arrayItens.get(i).getBounds())) {
+                            if (arrayItens.get(i).item == ITEM_BOTA) {
+                                player1.qtdeItemBota++;
+                                somaScore+=100;
+                                player1.velocidade++; // Se houver uma intersecção do player com o item, incrementa velocidade
+                                labelScore.setText(String.valueOf(somaScore));
+                                labelQuantidadeItemBota.setText("x" + player1.qtdeItemBota);
+                            } else if (arrayItens.get(i).item == ITEM_TAMANHOEXPLOSAO) {
+                                player1.qtdeItemExplosao++;
+                                somaScore+=100;
+                                player1.bombaSize++;
+                                labelScore.setText(String.valueOf(somaScore));
+                                labelQuantidadeItemExplosao.setText("x" + player1.qtdeItemExplosao);
+                            } else if (arrayItens.get(i).item == ITEM_QTDEBOMBAS) {
+                                player1.qtdeItemBomba++;
+                                somaScore+=100;
+                                player1.maxBombas++;
+                                labelScore.setText(String.valueOf(somaScore));
+                                labelQuantidadeItemBomba.setText("x" + player1.qtdeItemBomba);
+                            } else {
+                                if (player1.getVida() < 3) {
+                                    player1.vida++;
+                                    checkVida();
+                                    scoreVida+=100;
+                                }
+                            }
+                            arrayItens.remove(i);
+                            i=0;
+                            continue;
+                        }
+                        if (multiplay) {
+                            if (player2.getHitBox().intersects(arrayItens.get(i).getBounds())) {
+                                if (arrayItens.get(i).item == ITEM_BOTA) {
+                                    player2.qtdeItemBota++;
+                                    player2.velocidade++; // Se houver uma intersecção do player com o item, incrementa velocidade
+                                    //labelQuantidadeItemBota.setText("x" + player2.qtdeItemBota);
+                                } else if (arrayItens.get(i).item == ITEM_TAMANHOEXPLOSAO) {
+                                    player2.qtdeItemExplosao++;
+                                    player2.bombaSize++;
+                                    //labelQuantidadeItemExplosao.setText("x" + player2.qtdeItemExplosao);
+                                } else if (arrayItens.get(i).item == ITEM_QTDEBOMBAS) {
+                                    player2.qtdeItemBomba++;
+                                    player2.maxBombas++;
+                                    //labelQuantidadeItemBomba.setText("x" + player2.qtdeItemBomba);
+                                } else {
+                                    if (player2.getVida() < 3) {
+                                        player2.vida++;
+                                        checkVida();
+                                    }
+                                }
+                                arrayItens.remove(i);
+                                i=0;
+                                continue;
+                            }
+                            if (player3.getHitBox().intersects(arrayItens.get(i).getBounds())) {
+                                if (arrayItens.get(i).item == ITEM_BOTA) {
+                                    player3.qtdeItemBota++;
+                                    player3.velocidade++; // Se houver uma intersecção do player com o item, incrementa velocidade
+                                    //labelQuantidadeItemBota.setText("x" + player3.qtdeItemBota);
+                                } else if (arrayItens.get(i).item == ITEM_TAMANHOEXPLOSAO) {
+                                    player3.qtdeItemExplosao++;
+                                    player3.bombaSize++;
+                                    //labelQuantidadeItemExplosao.setText("x" + player3.qtdeItemExplosao);
+                                } else if (arrayItens.get(i).item == ITEM_QTDEBOMBAS) {
+                                    player3.qtdeItemBomba++;
+                                    player3.maxBombas++;
+                                    //labelQuantidadeItemBomba.setText("x" + player3.qtdeItemBomba);
+                                } else {
+                                    if (player3.getVida() < 3) {
+                                        player3.vida++;
+                                        checkVida();
+                                    }
+                                }
+                                arrayItens.remove(i);
+                                i=0;
+                                continue;
+                            }
+                            if (player4.getHitBox().intersects(arrayItens.get(i).getBounds())) {
+                                if (arrayItens.get(i).item == ITEM_BOTA) {
+                                    player4.qtdeItemBota++;
+                                    player4.velocidade++; // Se houver uma intersecção do player com o item, incrementa velocidade
+                                    //labelQuantidadeItemBota.setText("x" + player4.qtdeItemBota);
+                                } else if (arrayItens.get(i).item == ITEM_TAMANHOEXPLOSAO) {
+                                    player4.qtdeItemExplosao++;
+                                    player4.bombaSize++;
+                                    //labelQuantidadeItemExplosao.setText("x" + player4.qtdeItemExplosao);
+                                } else if (arrayItens.get(i).item == ITEM_QTDEBOMBAS) {
+                                    player4.qtdeItemBomba++;
+                                    player4.maxBombas++;
+                                    //labelQuantidadeItemBomba.setText("x" + player4.qtdeItemBomba);
+                                } else {
+                                    if (player4.getVida() < 3) {
+                                        player4.vida++;
+                                        checkVida();
+                                    }
+                                }
+                                arrayItens.remove(i);
+                                i=0;
+                                continue;
+                            }
+                        }
+                        if (arrayItens.isEmpty()) {
+                            break;
+                        }
+                    }
+                }
+            }catch (Exception eitens){
+                System.out.println("Erro refreshItens: "+eitens);
+            }
+            if (!player1.boolStunned && player1.getVida()>0) { // Se não tomou dano recente (stun) e está vivo
+                if (player1.estado == PARADO) {
+                    player1.personagem = player1.imagensPlayer[PARADO];
+                } else if (player1.estado == ANDANDO_DIREITA) {
+                    player1.personagem = player1.imagensPlayer[ANDANDO_DIREITA];
+                } else if (player1.estado == ANDANDO_ESQUERDA) {
+                    player1.personagem = player1.imagensPlayer[ANDANDO_ESQUERDA];
+                } else if (player1.estado == ANDANDO_FRENTE) {
+                    player1.personagem = player1.imagensPlayer[ANDANDO_FRENTE];
+                } else if (player1.estado == ANDANDO_COSTAS) {
+                    player1.personagem = player1.imagensPlayer[ANDANDO_COSTAS];
+                } else {
+                    player1.personagem = player1.imagensPlayer[PARADO];
+                }
 
-            //// Checar o movimento e colisões
-            if (player1 != null && !player1.boolStunned && player1.getVida()>0) // Se não tomou dano recente (stun) e está vivo
-                checkPlayerMovements(player1);
-            if (player2 != null && !player2.boolStunned && player2.getVida()>0) // Se não tomou dano recente (stun) e está vivo
-                checkPlayerMovements(player2);
-            if (player3 != null && !player3.boolStunned && player3.getVida()>0) // Se não tomou dano recente (stun) e está vivo
-            checkPlayerMovements(player3);
-            if (player4 != null && !player4.boolStunned && player4.getVida()>0) // Se não tomou dano recente (stun) e está vivo
-            checkPlayerMovements(player4);
+                if (player1.moveRight) {
+                    if (intersBombas(new Rectangle(player1.X + player1.velocidade, player1.Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(player1.X + player1.velocidade, player1.Y + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(player1.X + player1.velocidade, player1.Y + 15, 30, 35), fase.arrayBlocosQuebraveis) && player1.X <= 856) {
+                        player1.X += player1.velocidade;
+                    }
+
+                    if (player1.estado != ANDANDO_DIREITA && !player1.moveDown && !player1.moveUp) {
+                        player1.estado = ANDANDO_DIREITA;
+                    }
 
 
-            //// Checa colisão dos player com os inimigos
-            checkPlayerEnemyColision();
-            
-            //repaint();
+                } else if (player1.moveLeft) {
+                    if (intersBombas(new Rectangle(player1.X - player1.velocidade, player1.Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(player1.X - player1.velocidade, player1.Y + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(player1.X - player1.velocidade, player1.Y + 15, 30, 35), fase.arrayBlocosQuebraveis) && player1.X >= 54) {
+                        player1.X -= player1.velocidade;
+                    }
+
+                    if (player1.estado != ANDANDO_ESQUERDA && !player1.moveDown && !player1.moveUp) {
+                        player1.estado = ANDANDO_ESQUERDA;
+                    }
+
+                }
+                if (player1.moveDown) {
+                    if (intersBombas(new Rectangle(player1.X, player1.Y + player1.velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(player1.X, player1.Y + player1.velocidade + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(player1.X, player1.Y + player1.velocidade + 15, 30, 35), fase.arrayBlocosQuebraveis) && player1.Y <= 550) {
+                        player1.Y += player1.velocidade;
+                    }
+
+                    if (player1.estado != ANDANDO_FRENTE) {
+                        player1.estado = ANDANDO_FRENTE;
+                    }
+
+
+                } else if (player1.moveUp) {
+                    if (intersBombas(new Rectangle(player1.X, player1.Y - player1.velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(player1.X, player1.Y - player1.velocidade + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(player1.X, player1.Y - player1.velocidade + 15, 30, 35), fase.arrayBlocosQuebraveis) && player1.Y >= 30) {
+                        player1.Y -= player1.velocidade;
+                    }
+
+                    if (player1.estado != ANDANDO_COSTAS) {
+                        player1.estado = ANDANDO_COSTAS;
+                    }
+
+                    // }
+                }
+                if (!player1.moveDown && !player1.moveUp && !player1.moveLeft && !player1.moveRight) {
+                    if (player1.estado != PARADO) {
+                        player1.estado = PARADO;
+                    }
+                }
+            }
+            if(multiplay){
+                auxiliarPlayer = player2;
+                if (auxiliarPlayer != null && !auxiliarPlayer.boolStunned && auxiliarPlayer.getVida()>0) { // Se não tomou dano recente (stun) e está vivo
+                    if (auxiliarPlayer.estado == PARADO) {
+                        auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[PARADO];
+                    } else if (player1.estado == ANDANDO_DIREITA) {
+                        auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[ANDANDO_DIREITA];
+                    } else if (player1.estado == ANDANDO_ESQUERDA) {
+                        auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[ANDANDO_ESQUERDA];
+                    } else if (player1.estado == ANDANDO_FRENTE) {
+                        auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[ANDANDO_FRENTE];
+                    } else if (player1.estado == ANDANDO_COSTAS) {
+                        auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[ANDANDO_COSTAS];
+                    } else {
+                        auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[PARADO];
+                    }
+
+                    if (auxiliarPlayer.moveRight) {
+                        if (intersBombas(new Rectangle(auxiliarPlayer.X + auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(auxiliarPlayer.X + auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(auxiliarPlayer.X + auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35), fase.arrayBlocosQuebraveis) && auxiliarPlayer.X <= 856) {
+                            auxiliarPlayer.X += auxiliarPlayer.velocidade;
+                        }
+
+                        if (auxiliarPlayer.estado != ANDANDO_DIREITA && !auxiliarPlayer.moveDown && !auxiliarPlayer.moveUp) {
+                            auxiliarPlayer.estado = ANDANDO_DIREITA;
+                        }
+
+
+                    } else if (auxiliarPlayer.moveLeft) {
+                        if (intersBombas(new Rectangle(auxiliarPlayer.X - auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(auxiliarPlayer.X - auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(auxiliarPlayer.X - auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35), fase.arrayBlocosQuebraveis) && auxiliarPlayer.X >= 54) {
+                            auxiliarPlayer.X -= auxiliarPlayer.velocidade;
+                        }
+
+                        if (auxiliarPlayer.estado != ANDANDO_ESQUERDA && !auxiliarPlayer.moveDown && !auxiliarPlayer.moveUp) {
+                            auxiliarPlayer.estado = ANDANDO_ESQUERDA;
+                        }
+
+                    }
+                    if (auxiliarPlayer.moveDown) {
+                        if (intersBombas(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y + player1.velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y + auxiliarPlayer.velocidade + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y + auxiliarPlayer.velocidade + 15, 30, 35), fase.arrayBlocosQuebraveis) && auxiliarPlayer.Y <= 550) {
+                            auxiliarPlayer.Y += auxiliarPlayer.velocidade;
+                        }
+
+                        if (auxiliarPlayer.estado != ANDANDO_FRENTE) {
+                            auxiliarPlayer.estado = ANDANDO_FRENTE;
+                        }
+
+
+                    } else if (auxiliarPlayer.moveUp) {
+                        if (intersBombas(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y - player1.velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y - auxiliarPlayer.velocidade + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y - auxiliarPlayer.velocidade + 15, 30, 35), fase.arrayBlocosQuebraveis) && auxiliarPlayer.Y >= 30) {
+                            auxiliarPlayer.Y -= auxiliarPlayer.velocidade;
+                        }
+
+                        if (auxiliarPlayer.estado != ANDANDO_COSTAS) {
+                            auxiliarPlayer.estado = ANDANDO_COSTAS;
+                        }
+
+                        // }
+                    }
+                    if (!auxiliarPlayer.moveDown && !auxiliarPlayer.moveUp && !auxiliarPlayer.moveLeft && !auxiliarPlayer.moveRight) {
+                        if (auxiliarPlayer.estado != PARADO) {
+                            auxiliarPlayer.estado = PARADO;
+                        }
+                    }
+                }
+                auxiliarPlayer = player3;
+                if (auxiliarPlayer != null && !auxiliarPlayer.boolStunned && auxiliarPlayer.getVida()>0) { // Se não tomou dano recente (stun) e está vivo
+                    if (auxiliarPlayer.estado == PARADO) {
+                        auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[PARADO];
+                    } else if (player1.estado == ANDANDO_DIREITA) {
+                        auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[ANDANDO_DIREITA];
+                    } else if (player1.estado == ANDANDO_ESQUERDA) {
+                        auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[ANDANDO_ESQUERDA];
+                    } else if (player1.estado == ANDANDO_FRENTE) {
+                        auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[ANDANDO_FRENTE];
+                    } else if (player1.estado == ANDANDO_COSTAS) {
+                        auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[ANDANDO_COSTAS];
+                    } else {
+                        auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[PARADO];
+                    }
+
+                    if (auxiliarPlayer.moveRight) {
+                        if (intersBombas(new Rectangle(auxiliarPlayer.X + auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(auxiliarPlayer.X + auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(auxiliarPlayer.X + auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35), fase.arrayBlocosQuebraveis) && auxiliarPlayer.X <= 856) {
+                            auxiliarPlayer.X += auxiliarPlayer.velocidade;
+                        }
+
+                        if (auxiliarPlayer.estado != ANDANDO_DIREITA && !auxiliarPlayer.moveDown && !auxiliarPlayer.moveUp) {
+                            auxiliarPlayer.estado = ANDANDO_DIREITA;
+                        }
+
+
+                    } else if (auxiliarPlayer.moveLeft) {
+                        if (intersBombas(new Rectangle(auxiliarPlayer.X - auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(auxiliarPlayer.X - auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(auxiliarPlayer.X - auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35), fase.arrayBlocosQuebraveis) && auxiliarPlayer.X >= 54) {
+                            auxiliarPlayer.X -= auxiliarPlayer.velocidade;
+                        }
+
+                        if (auxiliarPlayer.estado != ANDANDO_ESQUERDA && !auxiliarPlayer.moveDown && !auxiliarPlayer.moveUp) {
+                            auxiliarPlayer.estado = ANDANDO_ESQUERDA;
+                        }
+
+                    }
+                    if (auxiliarPlayer.moveDown) {
+                        if (intersBombas(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y + player1.velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y + auxiliarPlayer.velocidade + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y + auxiliarPlayer.velocidade + 15, 30, 35), fase.arrayBlocosQuebraveis) && auxiliarPlayer.Y <= 550) {
+                            auxiliarPlayer.Y += auxiliarPlayer.velocidade;
+                        }
+
+                        if (auxiliarPlayer.estado != ANDANDO_FRENTE) {
+                            auxiliarPlayer.estado = ANDANDO_FRENTE;
+                        }
+
+
+                    } else if (auxiliarPlayer.moveUp) {
+                        if (intersBombas(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y - player1.velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y - auxiliarPlayer.velocidade + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y - auxiliarPlayer.velocidade + 15, 30, 35), fase.arrayBlocosQuebraveis) && auxiliarPlayer.Y >= 30) {
+                            auxiliarPlayer.Y -= auxiliarPlayer.velocidade;
+                        }
+
+                        if (auxiliarPlayer.estado != ANDANDO_COSTAS) {
+                            auxiliarPlayer.estado = ANDANDO_COSTAS;
+                        }
+
+                        // }
+                    }
+                    if (!auxiliarPlayer.moveDown && !auxiliarPlayer.moveUp && !auxiliarPlayer.moveLeft && !auxiliarPlayer.moveRight) {
+                        if (auxiliarPlayer.estado != PARADO) {
+                            auxiliarPlayer.estado = PARADO;
+                        }
+                    }
+                }
+                auxiliarPlayer = player4;
+                if (auxiliarPlayer != null && !auxiliarPlayer.boolStunned && auxiliarPlayer.getVida()>0) { // Se não tomou dano recente (stun) e está vivo
+                    if (auxiliarPlayer.estado == PARADO) {
+                        auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[PARADO];
+                    } else if (player1.estado == ANDANDO_DIREITA) {
+                        auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[ANDANDO_DIREITA];
+                    } else if (player1.estado == ANDANDO_ESQUERDA) {
+                        auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[ANDANDO_ESQUERDA];
+                    } else if (player1.estado == ANDANDO_FRENTE) {
+                        auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[ANDANDO_FRENTE];
+                    } else if (player1.estado == ANDANDO_COSTAS) {
+                        auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[ANDANDO_COSTAS];
+                    } else {
+                        auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[PARADO];
+                    }
+
+                    if (auxiliarPlayer.moveRight) {
+                        if (intersBombas(new Rectangle(auxiliarPlayer.X + auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(auxiliarPlayer.X + auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(auxiliarPlayer.X + auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35), fase.arrayBlocosQuebraveis) && auxiliarPlayer.X <= 856) {
+                            auxiliarPlayer.X += auxiliarPlayer.velocidade;
+                        }
+
+                        if (auxiliarPlayer.estado != ANDANDO_DIREITA && !auxiliarPlayer.moveDown && !auxiliarPlayer.moveUp) {
+                            auxiliarPlayer.estado = ANDANDO_DIREITA;
+                        }
+
+
+                    } else if (auxiliarPlayer.moveLeft) {
+                        if (intersBombas(new Rectangle(auxiliarPlayer.X - auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(auxiliarPlayer.X - auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(auxiliarPlayer.X - auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35), fase.arrayBlocosQuebraveis) && auxiliarPlayer.X >= 54) {
+                            auxiliarPlayer.X -= auxiliarPlayer.velocidade;
+                        }
+
+                        if (auxiliarPlayer.estado != ANDANDO_ESQUERDA && !auxiliarPlayer.moveDown && !auxiliarPlayer.moveUp) {
+                            auxiliarPlayer.estado = ANDANDO_ESQUERDA;
+                        }
+
+                    }
+                    if (auxiliarPlayer.moveDown) {
+                        if (intersBombas(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y + player1.velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y + auxiliarPlayer.velocidade + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y + auxiliarPlayer.velocidade + 15, 30, 35), fase.arrayBlocosQuebraveis) && auxiliarPlayer.Y <= 550) {
+                            auxiliarPlayer.Y += auxiliarPlayer.velocidade;
+                        }
+
+                        if (auxiliarPlayer.estado != ANDANDO_FRENTE) {
+                            auxiliarPlayer.estado = ANDANDO_FRENTE;
+                        }
+
+
+                    } else if (auxiliarPlayer.moveUp) {
+                        if (intersBombas(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y - player1.velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y - auxiliarPlayer.velocidade + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y - auxiliarPlayer.velocidade + 15, 30, 35), fase.arrayBlocosQuebraveis) && auxiliarPlayer.Y >= 30) {
+                            auxiliarPlayer.Y -= auxiliarPlayer.velocidade;
+                        }
+
+                        if (auxiliarPlayer.estado != ANDANDO_COSTAS) {
+                            auxiliarPlayer.estado = ANDANDO_COSTAS;
+                        }
+
+                        // }
+                    }
+                    if (!auxiliarPlayer.moveDown && !auxiliarPlayer.moveUp && !auxiliarPlayer.moveLeft && !auxiliarPlayer.moveRight) {
+                        if (auxiliarPlayer.estado != PARADO) {
+                            auxiliarPlayer.estado = PARADO;
+                        }
+                    }
+                }
+            }
+
+
+            //if(fase.arrayInimigos != null)
+            for (i = 0; i < fase.arrayInimigos.size(); i++) {
+                if (!player1.boolDanoRecente && player1.getHitBox().intersects(fase.arrayInimigos.get(i).getBounds())) {
+                    player1.danificado();
+                }
+                if(multiplay) {
+                    if (player2 != null && !player2.boolDanoRecente && player2.getHitBox().intersects(fase.arrayInimigos.get(i).getBounds())) {
+                        player2.danificado();
+                        System.out.println("player2 danificado?");
+                    }
+                    if (player3 != null && !player3.boolDanoRecente && player3.getHitBox().intersects(fase.arrayInimigos.get(i).getBounds())) {
+                        player3.danificado();
+                        System.out.println("player3 danificado?");
+                    }
+                    if (player4 != null && !player4.boolDanoRecente && player4.getHitBox().intersects(fase.arrayInimigos.get(i).getBounds())) {
+                        player4.danificado();
+                        System.out.println("player4 danificado?");
+                    }
+                }
+            }
+            repaint();
         }catch (Exception eRef){
             System.out.println("Erro no refreshModels: "+eRef);
         }
     });
-
-    void checkPlayerEnemyColision(){
-        for (i = 0; i < fase.arrayInimigos.size(); i++) {
-            if (player1 != null && !player1.boolDanoRecente && player1.getHitBox().intersects(fase.arrayInimigos.get(i).getBounds())) {
-                player1.danificado();
-            }
-            if (player2 != null && player2 != null && !player2.boolDanoRecente && player2.getHitBox().intersects(fase.arrayInimigos.get(i).getBounds())) {
-                player2.danificado();
-                System.out.println("player2 danificado?");
-            }
-            if (player3 != null && player3 != null && !player3.boolDanoRecente && player3.getHitBox().intersects(fase.arrayInimigos.get(i).getBounds())) {
-                player3.danificado();
-                System.out.println("player3 danificado?");
-            }
-            if (player4 != null && player4 != null && !player4.boolDanoRecente && player4.getHitBox().intersects(fase.arrayInimigos.get(i).getBounds())) {
-                player4.danificado();
-                System.out.println("player4 danificado?");
-            }
-            if(fase.arrayInimigos.isEmpty())
-                break;
-        }
-    }
-
-    void damageDelayControl(){
-        if (player1 != null && player1.boolDanoRecente) {
-            if (player1.danoRecente++ == 0) {
-                checkVida();
-                player1.personagem = player1.imagensPlayer[DANIFICADO];
-                player1.boolStunned = true;
-            }
-            if (player1.danoRecente >= 20) { // numero de "ticks" de imobilização
-                player1.boolStunned = false;
-            }
-            if (player1.danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
-                player1.boolDanoRecente = false;
-                player1.danoRecente = 0;
-            }
-        }
-        if (player2 != null && player2.boolDanoRecente) {
-            if (player2.danoRecente++ == 0) {
-                checkVida();
-                player2.personagem = player2.imagensPlayer[DANIFICADO];
-                player2.boolStunned = true;
-            }
-            if (player2.danoRecente >= 20) { // numero de "ticks" de imobilização
-                player2.boolStunned = false;
-            }
-            if (player2.danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
-                player2.boolDanoRecente = false;
-                player2.danoRecente = 0;
-            }
-        }
-        if (player3 != null && player3.boolDanoRecente) {
-            if (player3.danoRecente++ == 0) {
-                checkVida();
-                player3.personagem = player2.imagensPlayer[DANIFICADO];
-                player3.boolStunned = true;
-            }
-            if (player3.danoRecente >= 20) { // numero de "ticks" de imobilização
-                player3.boolStunned = false;
-            }
-            if (player3.danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
-                player3.boolDanoRecente = false;
-                player3.danoRecente = 0;
-            }
-        }
-        if (player4 != null && player4.boolDanoRecente) {
-            if (player4.danoRecente++ == 0) {
-                checkVida();
-                player4.personagem = player2.imagensPlayer[DANIFICADO];
-                player4.boolStunned = true;
-            }
-            if (player4.danoRecente >= 20) { // numero de "ticks" de imobilização
-                player4.boolStunned = false;
-            }
-            if (player4.danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
-                player4.boolDanoRecente = false;
-                player4.danoRecente = 0;
-            }
-        }
-    }
-
-    void checkPlayerItemColision(Player auxiliarPlayer){
-        for (int i = 0; i < arrayItens.size(); i++) {
-            if (player1 != null && player1.getHitBox().intersects(arrayItens.get(i).getBounds())) {
-                if (arrayItens.get(i).item == ITEM_BOTA) {
-                    player1.qtdeItemBota++;
-                    somaScore+=100;
-                    player1.velocidade++; // Se houver uma intersecção do player com o item, incrementa velocidade
-                    labelScore.setText(String.valueOf(somaScore));
-                    labelQuantidadeItemBota.setText("x" + player1.qtdeItemBota);
-                } else if (arrayItens.get(i).item == ITEM_TAMANHOEXPLOSAO) {
-                    player1.qtdeItemExplosao++;
-                    somaScore+=100;
-                    player1.bombaSize++;
-                    labelScore.setText(String.valueOf(somaScore));
-                    labelQuantidadeItemExplosao.setText("x" + player1.qtdeItemExplosao);
-                } else if (arrayItens.get(i).item == ITEM_QTDEBOMBAS) {
-                    player1.qtdeItemBomba++;
-                    somaScore+=100;
-                    player1.maxBombas++;
-                    labelScore.setText(String.valueOf(somaScore));
-                    labelQuantidadeItemBomba.setText("x" + player1.qtdeItemBomba);
-                } else {
-                    if (player1.getVida() < 3) {
-                        player1.vida++;
-                        checkVida();
-                        scoreVida+=100;
-                    }
-                }
-                arrayItens.remove(i);
-                i=0;
-                continue;
-            }
-            if (player2 != null && player2.getHitBox().intersects(arrayItens.get(i).getBounds())) {
-                if (arrayItens.get(i).item == ITEM_BOTA) {
-                    player2.qtdeItemBota++;
-                    player2.velocidade++; // Se houver uma intersecção do player com o item, incrementa velocidade
-                    //labelQuantidadeItemBota.setText("x" + player2.qtdeItemBota);
-                } else if (arrayItens.get(i).item == ITEM_TAMANHOEXPLOSAO) {
-                    player2.qtdeItemExplosao++;
-                    player2.bombaSize++;
-                    //labelQuantidadeItemExplosao.setText("x" + player2.qtdeItemExplosao);
-                } else if (arrayItens.get(i).item == ITEM_QTDEBOMBAS) {
-                    player2.qtdeItemBomba++;
-                    player2.maxBombas++;
-                    //labelQuantidadeItemBomba.setText("x" + player2.qtdeItemBomba);
-                } else {
-                    if (player2.getVida() < 3) {
-                        player2.vida++;
-                        checkVida();
-                    }
-                }
-                arrayItens.remove(i);
-                i=0;
-                continue;
-            }
-            if (player3 != null && player3.getHitBox().intersects(arrayItens.get(i).getBounds())) {
-                if (arrayItens.get(i).item == ITEM_BOTA) {
-                    player3.qtdeItemBota++;
-                    player3.velocidade++; // Se houver uma intersecção do player com o item, incrementa velocidade
-                    //labelQuantidadeItemBota.setText("x" + player3.qtdeItemBota);
-                } else if (arrayItens.get(i).item == ITEM_TAMANHOEXPLOSAO) {
-                    player3.qtdeItemExplosao++;
-                    player3.bombaSize++;
-                    //labelQuantidadeItemExplosao.setText("x" + player3.qtdeItemExplosao);
-                } else if (arrayItens.get(i).item == ITEM_QTDEBOMBAS) {
-                    player3.qtdeItemBomba++;
-                    player3.maxBombas++;
-                    //labelQuantidadeItemBomba.setText("x" + player3.qtdeItemBomba);
-                } else {
-                    if (player3.getVida() < 3) {
-                        player3.vida++;
-                        checkVida();
-                    }
-                }
-                arrayItens.remove(i);
-                i=0;
-                continue;
-            }
-            if (player4 != null && player4.getHitBox().intersects(arrayItens.get(i).getBounds())) {
-                if (arrayItens.get(i).item == ITEM_BOTA) {
-                    player4.qtdeItemBota++;
-                    player4.velocidade++; // Se houver uma intersecção do player com o item, incrementa velocidade
-                    //labelQuantidadeItemBota.setText("x" + player4.qtdeItemBota);
-                } else if (arrayItens.get(i).item == ITEM_TAMANHOEXPLOSAO) {
-                    player4.qtdeItemExplosao++;
-                    player4.bombaSize++;
-                    //labelQuantidadeItemExplosao.setText("x" + player4.qtdeItemExplosao);
-                } else if (arrayItens.get(i).item == ITEM_QTDEBOMBAS) {
-                    player4.qtdeItemBomba++;
-                    player4.maxBombas++;
-                    //labelQuantidadeItemBomba.setText("x" + player4.qtdeItemBomba);
-                } else {
-                    if (player4.getVida() < 3) {
-                        player4.vida++;
-                        checkVida();
-                    }
-                }
-                arrayItens.remove(i);
-                i=0;
-                continue;
-            }
-            if (arrayItens.isEmpty()) {
-                break;
-            }
-        }
-    }
-
-    void checkPlayerMovements(Player auxiliarPlayer){
-        if (auxiliarPlayer != null && !auxiliarPlayer.boolStunned && auxiliarPlayer.getVida()>0) { // Se não tomou dano recente (stun) e está vivo
-            if (auxiliarPlayer.estado == PARADO) {
-                auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[PARADO];
-            } else if (auxiliarPlayer.estado == ANDANDO_DIREITA) {
-                auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[ANDANDO_DIREITA];
-            } else if (auxiliarPlayer.estado == ANDANDO_ESQUERDA) {
-                auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[ANDANDO_ESQUERDA];
-            } else if (auxiliarPlayer.estado == ANDANDO_FRENTE) {
-                auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[ANDANDO_FRENTE];
-            } else if (auxiliarPlayer.estado == ANDANDO_COSTAS) {
-                auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[ANDANDO_COSTAS];
-            } else {
-                auxiliarPlayer.personagem = auxiliarPlayer.imagensPlayer[PARADO];
-            }
-
-            if (auxiliarPlayer.moveRight) {
-                if (intersBombas(new Rectangle(auxiliarPlayer.X + auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(auxiliarPlayer.X + auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(auxiliarPlayer.X + auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35), fase.arrayBlocosQuebraveis) && auxiliarPlayer.X <= 856) {
-                    auxiliarPlayer.X += auxiliarPlayer.velocidade;
-                }
-
-                if (auxiliarPlayer.estado != ANDANDO_DIREITA && !auxiliarPlayer.moveDown && !auxiliarPlayer.moveUp) {
-                    auxiliarPlayer.estado = ANDANDO_DIREITA;
-                }
-
-
-            } else if (auxiliarPlayer.moveLeft) {
-                if (intersBombas(new Rectangle(auxiliarPlayer.X - auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(auxiliarPlayer.X - auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(auxiliarPlayer.X - auxiliarPlayer.velocidade, auxiliarPlayer.Y + 15, 30, 35), fase.arrayBlocosQuebraveis) && auxiliarPlayer.X >= 54) {
-                    auxiliarPlayer.X -= auxiliarPlayer.velocidade;
-                }
-
-                if (auxiliarPlayer.estado != ANDANDO_ESQUERDA && !auxiliarPlayer.moveDown && !auxiliarPlayer.moveUp) {
-                    auxiliarPlayer.estado = ANDANDO_ESQUERDA;
-                }
-
-            }
-            if (auxiliarPlayer.moveDown) {
-                if (intersBombas(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y + player1.velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y + auxiliarPlayer.velocidade + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y + auxiliarPlayer.velocidade + 15, 30, 35), fase.arrayBlocosQuebraveis) && auxiliarPlayer.Y <= 550) {
-                    auxiliarPlayer.Y += auxiliarPlayer.velocidade;
-                }
-
-                if (auxiliarPlayer.estado != ANDANDO_FRENTE) {
-                    auxiliarPlayer.estado = ANDANDO_FRENTE;
-                }
-
-
-            } else if (auxiliarPlayer.moveUp) {
-                if (intersBombas(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y - player1.velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y - auxiliarPlayer.velocidade + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(auxiliarPlayer.X, auxiliarPlayer.Y - auxiliarPlayer.velocidade + 15, 30, 35), fase.arrayBlocosQuebraveis) && auxiliarPlayer.Y >= 30) {
-                    auxiliarPlayer.Y -= auxiliarPlayer.velocidade;
-                }
-
-                if (auxiliarPlayer.estado != ANDANDO_COSTAS) {
-                    auxiliarPlayer.estado = ANDANDO_COSTAS;
-                }
-
-                // }
-            }
-            if (!auxiliarPlayer.moveDown && !auxiliarPlayer.moveUp && !auxiliarPlayer.moveLeft && !auxiliarPlayer.moveRight) {
-                if (auxiliarPlayer.estado != PARADO) {
-                    auxiliarPlayer.estado = PARADO;
-                }
-            }
-        }
-    }
 
     class Fase extends JPanel{
         ArrayList<Rectangle> arrayBlocosQuebraveis;
@@ -1893,7 +2092,7 @@ class Servidor extends Thread {
         }
     }
 
-    Servidor(){
+    Cliente(){
         super("Bomb Your Way Out");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         getContentPane().setBackground(Color.black);
@@ -1991,6 +2190,6 @@ class Servidor extends Thread {
         setVisible(true);
     }
     static public void main(String[] args) throws InterruptedException {
-        new Servidor();
+        new Cliente();
     }
 }
