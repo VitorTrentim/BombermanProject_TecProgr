@@ -669,7 +669,7 @@ class Servidor extends Thread {
             }
         }
 
-        boolean funcChecaPosItens(int valor, int[] arrayDosItens) {
+        boolean funcChecaPosItens(int valor, int[] arrayDosItens) { // Serve para não repetir itens na mesma posição
             for (int arrayDosIten : arrayDosItens) {
                 if (valor == arrayDosIten) {
                     return true;
@@ -678,211 +678,7 @@ class Servidor extends Thread {
             return false;
         }
 
-        public void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            int i;
-            boolean boolInimigoRemovido = false;
-            try {
-                /// Desenha o fundo
-                g.drawImage(imagensAmbiente[FUNDO], 0, 0, getSize().width, getSize().height, this);
-                /// Desenha as bordas superior e inferior
-                for (i = 50; i <= imagensAmbiente[FUNDO].getWidth(this) - 100; i += 50) {
-                    g.drawImage(imagensAmbiente[MARGEM_C], i, 0, 50, 50, this);
-                    g.drawImage(imagensAmbiente[MARGEM_B], i, imagensAmbiente[FUNDO].getHeight(this) - 50, 50, 50,
-                            this);
-                }
-                /// Desenha as bordas da esquerda e da direita
-                for (i = 50; i <= imagensAmbiente[FUNDO].getHeight(this) - 100; i += 50) {
-                    g.drawImage(imagensAmbiente[MARGEM_E], 0, i, 50, 50, this);
-                    g.drawImage(imagensAmbiente[MARGEM_D], imagensAmbiente[FUNDO].getWidth(this) - 50, i, 50, 50, this);
-                }
-                /// Desenha as quinas
-                g.drawImage(imagensAmbiente[MARGEM_CE], 0, 0, 50, 50, this);
-                g.drawImage(imagensAmbiente[MARGEM_CD], 900, 0, 50, 50, this);
-                g.drawImage(imagensAmbiente[MARGEM_BE], 0, 600, 50, 50, this);
-                g.drawImage(imagensAmbiente[MARGEM_BD], 900, 600, 50, 50, this);
-
-                /// Coloca os blocos fixos dentro do campo de jogo
-                for (int y = 100; y <= BLOCOSVERTICAIS * 100; y += 100) {
-                    for (i = 100; i <= BLOCOSHORIZONTAIS * 100; i += 100) {
-                        g.drawImage(imagensAmbiente[BLOCO], i, y, this);
-                    }
-                }
-                /// Desenha os itens
-                for (i = 0; i < arrayItens.size(); i++) {
-                    g.drawImage(arrayItens.get(i).imagensItemAnimacao[indexItems].getImage(), arrayItens.get(i).posX,
-                            arrayItens.get(i).posY, 40, 40, this);
-                    if (arrayItens.isEmpty())
-                        break;
-                }
-                /// Coloca os blocos quebráveis dentro do campo de jogo
-                for (i = 0; i < arrayBlocosQuebraveis.size(); i++) {
-                    g.drawImage(imagensAmbiente[BLOCOQUEBRAVEL], (int) arrayBlocosQuebraveis.get(i).getX(),
-                            (int) arrayBlocosQuebraveis.get(i).getY(), this);
-                    if (arrayBlocosQuebraveis.isEmpty())
-                        break;
-                }
-                /// DESENHA AS BOMBAS
-                if (arrayBombas.size() > 0) {
-                    for (i = 0; i < arrayBombas.size(); i++) {
-                        if (arrayBombas.get(i).indexImage == 99) {
-                            funcExplodeBomba(arrayBombas.get(i));
-                            arrayBombas.remove(arrayBombas.get(i));
-                            if (arrayBombas.isEmpty())
-                                break;
-                        }
-                        g.drawImage(arrayBombas.get(i).arrayImagensBomba[arrayBombas.get(i).indexImage / 5],
-                                arrayBombas.get(i).getX() + 13, arrayBombas.get(i).getY() + 13, 25, 25, this);
-                    }
-                }
-                /// DESENHA AS EXPLOSOES
-                if (arrayExplosao.size() > 0) {
-                    for (i = 0; i < arrayExplosao.size(); i++) {
-                        if (arrayExplosao.get(i).tipoDeAnimacao == 0)
-                            g.drawImage(explosao, arrayExplosao.get(i).x, arrayExplosao.get(i).y, this);
-                        else
-                            g.drawImage(explosao2, arrayExplosao.get(i).x, arrayExplosao.get(i).y, this);
-
-                        // Checa colisao explosao com outra bomba
-                        for (int j = 0; j < arrayBombas.size(); j++) {
-                            if (arrayExplosao.get(i).hitBox.intersects(arrayBombas.get(j).getHitBox())) {
-                                funcExplodeBomba(arrayBombas.get(j));
-                                // sem a melhoria de remover apenas o ultimo
-                                arrayBombas.remove(j);
-                            }
-                            if (arrayBombas.isEmpty())
-                                break;
-                        }
-                        // Checa colisao da explosao com o player
-                        if (!player1.boolDanoRecente && arrayExplosao.get(i).hitBox.intersects(player1.getHitBox())) {
-                            player1.danificado();
-                        }
-                        if (multiplay) {
-                            if (player2 != null && !player2.boolDanoRecente
-                                    && arrayExplosao.get(i).hitBox.intersects(player2.getHitBox())) {
-                                player2.danificado();
-                                System.out.println("dano player2");
-                            }
-                            if (player3 != null && !player3.boolDanoRecente
-                                    && arrayExplosao.get(i).hitBox.intersects(player3.getHitBox())) {
-                                player3.danificado();
-                            }
-                            if (player4 != null && !player4.boolDanoRecente
-                                    && arrayExplosao.get(i).hitBox.intersects(player4.getHitBox())) {
-                                player4.danificado();
-                            }
-                        }
-                        /// Checa Colisao da explosao com o inimigo
-                        for (int j = 0; j < arrayInimigos.size(); j++) {
-                            if (arrayExplosao.get(i).hitBox.intersects(arrayInimigos.get(j).getBounds())
-                                    && arrayExplosao.get(i).holdDraw > 0) { // Checa colisao da bomba com o inimigo
-                                arrayInimigos.remove(j); // Remove o objeto inimigo do arrayInimigos (não será mais
-                                                         // desenhado)
-                                // barraSuperior.scoreMonstro+=100;
-                                somaScore += 100;
-                                boolInimigoRemovido = true;
-                            }
-                            if (arrayInimigos.isEmpty()) {
-                                break;
-                            } else if (boolInimigoRemovido) {
-                                j = 0;
-                                boolInimigoRemovido = false;
-                            }
-                        }
-                        arrayExplosao.get(i).holdDraw--;
-                        if (arrayExplosao.get(i).holdDraw < 0) { // Checa a colisao da explosão com os blocos quebraveis
-                            for (int j = 0; j < arrayBlocosQuebraveis.size(); j++) {
-                                if ((arrayExplosao.get(i).hitBox.intersects(arrayBlocosQuebraveis.get(j)))) {
-                                    arrayBlocosQuebraveis.remove(j); // Remove os blocos quebraveis
-                                    somaScore += 25;
-                                    labelScore.setText(String.valueOf(somaScore));
-                                }
-                            }
-                            //////////////////////////////////// remoçao de itens faltando
-                            arrayExplosao.remove(i);
-                        }
-                    }
-                }
-
-                /// Desenha o Inimigo
-
-                if (mult.arrayInimigos.size() > 0) {
-                    for (i = 0; i < arrayInimigos.size(); i++) {
-                        if (arrayInimigos.get(i) != null)
-                            g.drawImage(arrayInimigos.get(i).getImage(), arrayInimigos.get(i).x + 8,
-                                    arrayInimigos.get(i).y - 5, 31, 47, this);
-                        if (arrayInimigos.isEmpty()) {
-                            break;
-                        }
-                    }
-                }
-                /// Desenha o player1 (posicao inicial 40x40)
-                g.drawImage(player1.personagem, player1.getX(), player1.getY(), 30, 50, this);
-
-                /// Demais players
-                if (player2 != null)
-                    g.drawImage(player2.personagem, player2.getX(), player2.getY(), 30, 50, this);
-                if (player3 != null)
-                    g.drawImage(player3.personagem, player3.getX(), player3.getY(), 30, 50, this);
-                if (player4 != null)
-                    g.drawImage(player4.personagem, player4.getX(), player4.getY(), 30, 50, this);
-
-                // Condições para o game over
-                if (single) { // Se for single player
-                    if (player1.getVida() == 0 || barraSuperior.valorTempo <= 0) { // Condicao para morrer
-                        boolGameOver = true;
-                        g.drawImage(gameOver, 0, 0, this);
-                    }
-                } else { // Se for multiplayer
-                    if (barraSuperior.valorTempo <= 0) {
-                        System.out.println("EMPATE?");
-                    } else {
-                        if (player1.getVida() <= 0) { // Condicao para morrer
-                            System.out.println("Player1 morto");
-                        }
-                        if (player2.getVida() <= 0) { // Condicao para morrer
-                            System.out.println("Player2 morto");
-                        }
-                        if (player3.getVida() <= 0) { // Condicao para morrer
-                            System.out.println("Player3 morto");
-                        }
-                        if (player4.getVida() <= 0) { // Condicao para morrer
-                            System.out.println("Player4 morto");
-                        }
-                    }
-                }
-                /// Passar de fase
-                if (!multiplay && arrayInimigos.size() == 0) {
-                    if (!ultimaFase) {
-                        g.drawImage(mult.doorClosed, 450, 300, 50, 50, this);
-                        if (player1.getHitBox().intersects(colisaoPorta)) {
-                            passarFase = true;
-                            g.setFont(fonte);
-                            g.setColor(Color.white);
-                            g.drawString("Pressione Enter para continuar", 253, 335);
-                        } else {
-                            passarFase = false;
-                        }
-                    } else {
-                        if (arrayInimigos.size() == 0) {
-                            g.setFont(fonte);
-                            g.setColor(Color.white);
-                            g.drawString("Pressione Enter para finalizar", 253, 335);
-                            passarFase = false;
-                            endGame = 0;
-                        }
-                    }
-                }
-
-                Toolkit.getDefaultToolkit().sync();
-            } catch (Exception e) {
-                System.out.println("Erro draw: " + e);
-            }
-        }
-
-    }
-
-    boolean intersBombas(Rectangle checkR) {
+    boolean intersBombas(Rectangle checkR) { // Movimentação player vs bomba
         for (Bomba bombaBlock : arrayBombas) {
             if (bombaBlock.boolBloqueandoPlayer && checkR.intersects(bombaBlock.getHitBox()))
                 return false;
@@ -890,7 +686,7 @@ class Servidor extends Thread {
         return true;
     }
 
-    boolean intersBombasInimigos(Rectangle checkR) {
+    boolean intersBombasInimigos(Rectangle checkR) { // Movimentação inimigos vs bomba
         for (Bomba bombaBlock : arrayBombas) {
             if (bombaBlock.boolBloqueandoInimigo && checkR.intersects(bombaBlock.getHitBox()))
                 return false;
