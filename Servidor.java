@@ -20,12 +20,10 @@ import java.net.ServerSocket;
 
 class Servidor extends Thread {
     //// DADOS PLAYER
-    final int PERS_1 = 1, PERS_2 = 2, PERS_3 = 3, PERS_4 = 4;
-    Player player1 = new Player(PERS_1);
-    Player player2;
-    Player player3;
-    Player player4;
-    Player auxiliarPlayer;
+    final int PERS1 = 1, PERS2 = 2, PERS3 = 3, PERS4 = 4;
+    Player arrayPlayers[] = {new Player(PERS1), new Player(PERS2), new Player(PERS3), new Player(PERS4)};
+    int quantidadeDePlayers = 0;
+
     final int PARADO = 0, ANDANDO_DIREITA = 1, ANDANDO_ESQUERDA = 2, ANDANDO_FRENTE = 3, ANDANDO_COSTAS = 4,
             DANIFICADO = 5, LENGTH_IMAGENS_PLAYER = 6;
     String nome_do_Player, score_do_Player = null;
@@ -59,7 +57,8 @@ class Servidor extends Thread {
     //// DADOS GERAIS
     final int TEMPO_DA_FASE = 150;
     boolean boolGameOver = false, boolLastBombaBlockPlayer = false, boolLastBombaBlockInimigo;
-    
+    float tempoCont;
+    Timer tempo;
     //// DADOS DAS FASES
     final int MULTIPLAYER1 = 0, MULTIPLAYER2 = 1, MULTIPLAYER3 = 2, MULTIPLAYER4 = 3;
     boolean passarFase = false, single = false, multiplay = false, ultimaFase = false, escreveu = false;
@@ -92,11 +91,13 @@ class Servidor extends Thread {
             // Checa as bombas recém colocadas e quando elas irão bloquear os players
             if (boolLastBombaBlockPlayer) {
                 if (!arrayBombas.isEmpty()) {
-                    if (!new Rectangle(player1.X, player1.Y + 15, 35, 40)
-                            .intersects(arrayBombas.get(arrayBombas.size() - 1).getHitBox())) {
+                    for(i = 0; i < 4; i++){
+                        if (!new Rectangle(arrayPlayers[i].X, arrayPlayers[i].Y + 15, 35, 40).intersects(arrayBombas.get(arrayBombas.size() - 1).getHitBox())) {
                         arrayBombas.get(arrayBombas.size() - 1).boolBloqueandoPlayer = true;
                         boolLastBombaBlockPlayer = false;
+                        }
                     }
+                    
                 } else {
                     boolLastBombaBlockPlayer = false;
                 }
@@ -129,176 +130,62 @@ class Servidor extends Thread {
 
     void checkPlayerEnemyColision() {
         for (int i = 0; i < mult.arrayInimigos.size(); i++) {
-            if (player1 != null && !player1.boolDanoRecente
-                    && player1.getHitBox().intersects(mult.arrayInimigos.get(i).getBounds())) {
-                player1.danificado();
+            for (int j = 0; j < 4 ; j++){
+                if (arrayPlayers[i] != null && !arrayPlayers[i].boolDanoRecente && arrayPlayers[i].getHitBox().intersects(mult.arrayInimigos.get(i).getBounds())) {
+                    arrayPlayers[i].danificado();
             }
-            if (player2 != null && player2 != null && !player2.boolDanoRecente
-                    && player2.getHitBox().intersects(mult.arrayInimigos.get(i).getBounds())) {
-                player2.danificado();
-                System.out.println("player2 danificado?");
-            }
-            if (player3 != null && player3 != null && !player3.boolDanoRecente
-                    && player3.getHitBox().intersects(mult.arrayInimigos.get(i).getBounds())) {
-                player3.danificado();
-                System.out.println("player3 danificado?");
-            }
-            if (player4 != null && player4 != null && !player4.boolDanoRecente
-                    && player4.getHitBox().intersects(mult.arrayInimigos.get(i).getBounds())) {
-                player4.danificado();
-                System.out.println("player4 danificado?");
-            }
+        }
             if (mult.arrayInimigos.isEmpty())
                 break;
         }
     }
 
     void damageDelayControl() {
-        if (player1 != null && player1.boolDanoRecente) {
-            if (player1.danoRecente++ == 0) {
-                player1.personagem = player1.imagensPlayer[DANIFICADO];
-                player1.boolStunned = true;
-            }
-            if (player1.danoRecente >= 20) { // numero de "ticks" de imobilização
-                player1.boolStunned = false;
-            }
-            if (player1.danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
-                player1.boolDanoRecente = false;
-                player1.danoRecente = 0;
-            }
-        }
-        if (player2 != null && player2.boolDanoRecente) {
-            if (player2.danoRecente++ == 0) {
-                player2.personagem = player2.imagensPlayer[DANIFICADO];
-                player2.boolStunned = true;
-            }
-            if (player2.danoRecente >= 20) { // numero de "ticks" de imobilização
-                player2.boolStunned = false;
-            }
-            if (player2.danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
-                player2.boolDanoRecente = false;
-                player2.danoRecente = 0;
+        for (int i = 0 ; i < 4; i++){
+            if (arrayPlayers[i] != null && arrayPlayers[i].boolDanoRecente) {
+                if (arrayPlayers[i].danoRecente++ == 0) {
+                    arrayPlayers[i].personagem = arrayPlayers[i].imagensPlayer[DANIFICADO];
+                    arrayPlayers[i].boolStunned = true;
+                }
+                if (arrayPlayers[i].danoRecente >= 20) { // numero de "ticks" de imobilização
+                    arrayPlayers[i].boolStunned = false;
+                }
+                if (arrayPlayers[i].danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
+                    arrayPlayers[i].boolDanoRecente = false;
+                    arrayPlayers[i].danoRecente = 0;
+                }
             }
         }
-        if (player3 != null && player3.boolDanoRecente) {
-            if (player3.danoRecente++ == 0) {
-                player3.personagem = player2.imagensPlayer[DANIFICADO];
-                player3.boolStunned = true;
-            }
-            if (player3.danoRecente >= 20) { // numero de "ticks" de imobilização
-                player3.boolStunned = false;
-            }
-            if (player3.danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
-                player3.boolDanoRecente = false;
-                player3.danoRecente = 0;
-            }
-        }
-        if (player4 != null && player4.boolDanoRecente) {
-            if (player4.danoRecente++ == 0) {
-                player4.personagem = player2.imagensPlayer[DANIFICADO];
-                player4.boolStunned = true;
-            }
-            if (player4.danoRecente >= 20) { // numero de "ticks" de imobilização
-                player4.boolStunned = false;
-            }
-            if (player4.danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
-                player4.boolDanoRecente = false;
-                player4.danoRecente = 0;
-            }
-        }
+        
     }
 
     void checkPlayerItemColision() {
         for (int i = 0; i < arrayItens.size(); i++) {
-            if (player1 != null && player1.getHitBox().intersects(arrayItens.get(i).getBounds())) {
-                if (arrayItens.get(i).item == ITEM_BOTA) {
-                    player1.qtdeItemBota++;
-                    player1.velocidade++; // Se houver uma intersecção do player com o item, incrementa velocidade
-                } else if (arrayItens.get(i).item == ITEM_TAMANHOEXPLOSAO) {
-                    player1.qtdeItemExplosao++;
-                    player1.bombaSize++;
-                } else if (arrayItens.get(i).item == ITEM_QTDEBOMBAS) {
-                    player1.qtdeItemBomba++;
-                    player1.maxBombas++;
-                } else {
-                    if (player1.getVida() < 3) {
-                        player1.vida++;
+            for (int j = 0 ; j < 4 ; j++){
+                if (arrayPlayers[i] != null && arrayPlayers[i].getHitBox().intersects(arrayItens.get(i).getBounds())) {
+                    if (arrayItens.get(i).item == ITEM_BOTA) {
+                        arrayPlayers[i].qtdeItemBota++;
+                        arrayPlayers[i].velocidade++; // Se houver uma intersecção do player com o item, incrementa velocidade
+                    } else if (arrayItens.get(i).item == ITEM_TAMANHOEXPLOSAO) {
+                        arrayPlayers[i].qtdeItemExplosao++;
+                        arrayPlayers[i].bombaSize++;
+                    } else if (arrayItens.get(i).item == ITEM_QTDEBOMBAS) {
+                        arrayPlayers[i].qtdeItemBomba++;
+                        arrayPlayers[i].maxBombas++;
+                    } else {
+                        if (arrayPlayers[i].getVida() < 3) {
+                            arrayPlayers[i].vida++;
+                        }
                     }
+                    arrayItens.remove(i);
+                    i = 0;
+                    if(arrayItens.isEmpty())
+                        break;
+                    continue;
                 }
-                arrayItens.remove(i);
-                i = 0;
-                if(arrayItens.isEmpty())
-                    break;
-                continue;
             }
-            if (player2 != null && player2.getHitBox().intersects(arrayItens.get(i).getBounds())) {
-                if (arrayItens.get(i).item == ITEM_BOTA) {
-                    player2.qtdeItemBota++;
-                    player2.velocidade++; 
-                } else if (arrayItens.get(i).item == ITEM_TAMANHOEXPLOSAO) {
-                    player2.qtdeItemExplosao++;
-                    player2.bombaSize++;
-                } else if (arrayItens.get(i).item == ITEM_QTDEBOMBAS) {
-                    player2.qtdeItemBomba++;
-                    player2.maxBombas++;
-                } else {
-                    if (player2.getVida() < 3) {
-                        player2.vida++;
-                    }
-                }
-                arrayItens.remove(i);
-                i = 0;
-                if(arrayItens.isEmpty())
-                    break;
-                continue;
-            }
-            if (player3 != null && player3.getHitBox().intersects(arrayItens.get(i).getBounds())) {
-                if (arrayItens.get(i).item == ITEM_BOTA) {
-                    player3.qtdeItemBota++;
-                    player3.velocidade++; 
-                } else if (arrayItens.get(i).item == ITEM_TAMANHOEXPLOSAO) {
-                    player3.qtdeItemExplosao++;
-                    player3.bombaSize++;
-                } else if (arrayItens.get(i).item == ITEM_QTDEBOMBAS) {
-                    player3.qtdeItemBomba++;
-                    player3.maxBombas++;
-                } else {
-                    if (player3.getVida() < 3) {
-                        player3.vida++;
-                    }
-                }
-                arrayItens.remove(i);
-                i = 0;
-                if(arrayItens.isEmpty())
-                    break;
-                continue;
-            }
-            if (player4 != null && player4.getHitBox().intersects(arrayItens.get(i).getBounds())) {
-                if (arrayItens.get(i).item == ITEM_BOTA) {
-                    player4.qtdeItemBota++;
-                    player4.velocidade++;
-                } else if (arrayItens.get(i).item == ITEM_TAMANHOEXPLOSAO) {
-                    player4.qtdeItemExplosao++;
-                    player4.bombaSize++;
-                } else if (arrayItens.get(i).item == ITEM_QTDEBOMBAS) {
-                    player4.qtdeItemBomba++;
-                    player4.maxBombas++;
-                } else {
-                    if (player4.getVida() < 3) {
-                        player4.vida++;
-                    }
-                }
-                arrayItens.remove(i);
-                i = 0;
-                if(arrayItens.isEmpty())
-                    break;
-                continue;
-            }
-            if (arrayItens.isEmpty()) {
-                break;
-            }
-        }
     }
+}
 
     class FaseMultiplayer extends JPanel {
         ArrayList<Rectangle> arrayBlocosQuebraveis;
@@ -312,16 +199,6 @@ class Servidor extends Thread {
         FaseMultiplayer(int numeroFase) {
             try {
                 if (numeroFase == MULTIPLAYER1) {
-                    player2 = new Player(PERS_2);
-                    player3 = new Player(PERS_3);
-                    player4 = new Player(PERS_4);
-                    player2.X = 60;
-                    player2.Y = 540;
-                    player3.X = 860;
-                    player3.Y = 540;
-                    player4.X = 860;
-                    player4.Y = 40;
-
                     funcAdcBlocosFixos(MULTIPLAYER1);
                     funcAdcBlocosQuebraveis(MULTIPLAYER1);
                     funcAdcItens(1, 2, 2, 1);
@@ -333,7 +210,7 @@ class Servidor extends Thread {
                 System.out.println("Erro Construtor Fases: " + e);
             }
         }
-
+        
         void funcAdcBlocosFixos(int mult) {
             try {
                 blocosFixos = new Rectangle[40];
@@ -369,307 +246,307 @@ class Servidor extends Thread {
         }
 
         void funcAdcBlocosQuebraveis(int mult) { // Cria o array dos blocos quebráveis da Fase
-            try {
-                arrayBlocosQuebraveis = new ArrayList<>(60);
-                int y;
-                if (mult == MULTIPLAYER1) {
-                    y = 50; // LINHA 1
-                    arrayBlocosQuebraveis.add(new Rectangle(200, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(600, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(700, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
-                } else if (mult == MULTIPLAYER2) {
-                    y = 50; // LINHA 1
-                    arrayBlocosQuebraveis.add(new Rectangle(200, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(600, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(700, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
-                    y = 100; // LINHA 2
-                    arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
-                    y = 150; // LINHA 3
-                    arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(200, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(500, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
-                    y = 200; // LINHA 4
-                    arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
-                    y = 250; // LINHA 5
-                    arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(200, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(800, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
-                    y = 300; // LINHA 6
-                    arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
-                    y = 350; // LINHA 7
-                    arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(500, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(800, y, 50, 50));
-                    y = 400; // LINHA 8
-                    arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
-                    y = 450; // LINHA 9
-                    arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(200, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(600, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(800, y, 50, 50));
-                    y = 500; // LINHA 10
-                    arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
-                    y = 550; // LINHA 11
-                    arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(300, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(800, y, 50, 50));
-                } else if (mult == MULTIPLAYER3) {
-                    y = 50; // LINHA 1
-                    arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(600, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
-                    y = 100; // LINHA 2
-                    arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
-                    y = 150; // LINHA 3
-                    arrayBlocosQuebraveis.add(new Rectangle(100, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(500, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
-                    y = 200; // LINHA 4
-                    arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
-                    y = 250; // LINHA 5
-                    arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(200, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(800, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
-                    y = 300; // LINHA 6
-                    arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
-                    y = 350; // LINHA 7
-                    arrayBlocosQuebraveis.add(new Rectangle(100, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(500, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(600, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
-                    y = 400; // LINHA 8
-                    arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
-                    y = 450; // LINHA 9
-                    arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(300, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(700, y, 50, 50));
-                    y = 500; // LINHA 10
-                    arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
-                    y = 550; // LINHA 11
-                    arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(500, y, 50, 50));
-                } else if (mult == MULTIPLAYER4) {
-                    y = 50; // LINHA 1
-                    arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
-                    y = 100; // LINHA 2
-                    arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
-                    y = 150; // LINHA 3
-                    arrayBlocosQuebraveis.add(new Rectangle(500, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
-                    y = 200; // LINHA 4
-                    arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
-                    y = 250; // LINHA 5
-                    arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(700, y, 50, 50));
-                    y = 300; // LINHA 6
-                    arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
-                    y = 350; // LINHA 7
-                    arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(100, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(700, y, 50, 50));
-                    y = 400; // LINHA 8
-                    arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
-                    y = 450; // LINHA 9
-                    arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(300, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(700, y, 50, 50));
-                    y = 500; // LINHA 10
-                    arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
-                    y = 550; // LINHA 11
-                    arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
-                    arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
-                }
-            } catch (Exception e) {
-                System.out.println("Erro Blocos Quebraveis: " + e);
+        try {
+            arrayBlocosQuebraveis = new ArrayList<>(60);
+            int y;
+            if (mult == MULTIPLAYER1) {
+                y = 50; // LINHA 1
+                arrayBlocosQuebraveis.add(new Rectangle(200, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(600, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(700, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
+            } else if (mult == MULTIPLAYER2) {
+                y = 50; // LINHA 1
+                arrayBlocosQuebraveis.add(new Rectangle(200, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(600, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(700, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
+                y = 100; // LINHA 2
+                arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
+                y = 150; // LINHA 3
+                arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(200, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(500, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
+                y = 200; // LINHA 4
+                arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
+                y = 250; // LINHA 5
+                arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(200, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(800, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
+                y = 300; // LINHA 6
+                arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
+                y = 350; // LINHA 7
+                arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(500, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(800, y, 50, 50));
+                y = 400; // LINHA 8
+                arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
+                y = 450; // LINHA 9
+                arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(200, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(600, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(800, y, 50, 50));
+                y = 500; // LINHA 10
+                arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
+                y = 550; // LINHA 11
+                arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(300, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(800, y, 50, 50));
+            } else if (mult == MULTIPLAYER3) {
+                y = 50; // LINHA 1
+                arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(600, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
+                y = 100; // LINHA 2
+                arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
+                y = 150; // LINHA 3
+                arrayBlocosQuebraveis.add(new Rectangle(100, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(500, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
+                y = 200; // LINHA 4
+                arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
+                y = 250; // LINHA 5
+                arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(200, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(800, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
+                y = 300; // LINHA 6
+                arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
+                y = 350; // LINHA 7
+                arrayBlocosQuebraveis.add(new Rectangle(100, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(500, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(600, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
+                y = 400; // LINHA 8
+                arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
+                y = 450; // LINHA 9
+                arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(300, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(700, y, 50, 50));
+                y = 500; // LINHA 10
+                arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
+                y = 550; // LINHA 11
+                arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(500, y, 50, 50));
+            } else if (mult == MULTIPLAYER4) {
+                y = 50; // LINHA 1
+                arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
+                y = 100; // LINHA 2
+                arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
+                y = 150; // LINHA 3
+                arrayBlocosQuebraveis.add(new Rectangle(500, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
+                y = 200; // LINHA 4
+                arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
+                y = 250; // LINHA 5
+                arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(700, y, 50, 50));
+                y = 300; // LINHA 6
+                arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
+                y = 350; // LINHA 7
+                arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(100, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(700, y, 50, 50));
+                y = 400; // LINHA 8
+                arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
+                y = 450; // LINHA 9
+                arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(300, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(700, y, 50, 50));
+                y = 500; // LINHA 10
+                arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
+                y = 550; // LINHA 11
+                arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
+                arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
             }
+        } catch (Exception e) {
+            System.out.println("Erro Blocos Quebraveis: " + e);
         }
+    }
 
         void funcAdcItens(int itemBota, int itemTamanhoExplosao, int itemQtdeBombas, int itemVida) {
-            try {
-                arrayItens = new ArrayList<>(itemBota + itemTamanhoExplosao + itemQtdeBombas + itemVida);
-                int i;
-                int[] posicaoDosItens = new int[itemBota + itemTamanhoExplosao + itemQtdeBombas + itemVida]; // guarda a
-                                                                                                             // posição
-                                                                                                             // dos
-                                                                                                             // itens,
-                                                                                                             // tamanho
-                                                                                                             // do vetor
-                                                                                                             // é qtde
-                                                                                                             // de itens
-                                                                                                             // max
-                Random numeroAleatorio = new Random();
-                int indexPosicoes = 0, numeroAleatorioItemAux;
+        try {
+            arrayItens = new ArrayList<>(itemBota + itemTamanhoExplosao + itemQtdeBombas + itemVida);
+            int i;
+            int[] posicaoDosItens = new int[itemBota + itemTamanhoExplosao + itemQtdeBombas + itemVida]; // guarda a
+                                                                                                            // posição
+                                                                                                            // dos
+                                                                                                            // itens,
+                                                                                                            // tamanho
+                                                                                                            // do vetor
+                                                                                                            // é qtde
+                                                                                                            // de itens
+                                                                                                            // max
+            Random numeroAleatorio = new Random();
+            int indexPosicoes = 0, numeroAleatorioItemAux;
 
-                for (i = 0; i < itemBota; i++) {
-                    if (indexPosicoes >= arrayBlocosQuebraveis.size() - 1)
-                        break;
-                    do {
-                        numeroAleatorioItemAux = numeroAleatorio.nextInt(arrayBlocosQuebraveis.size()); // Gera um
-                                                                                                        // numero
-                                                                                                        // aleatorio
-                    } while (funcChecaPosItens(numeroAleatorioItemAux, posicaoDosItens));
-                    arrayItens.add(new Itens(ITEM_BOTA, (int) arrayBlocosQuebraveis.get(numeroAleatorioItemAux).getX(),
-                            (int) arrayBlocosQuebraveis.get(numeroAleatorioItemAux).getY()));
-                    posicaoDosItens[indexPosicoes] = numeroAleatorioItemAux;
-                    indexPosicoes++;
-                }
-
-                for (i = 0; i < itemTamanhoExplosao; i++) {
-                    if (indexPosicoes >= arrayBlocosQuebraveis.size() - 1)
-                        break;
-                    do {
-                        numeroAleatorioItemAux = numeroAleatorio.nextInt(arrayBlocosQuebraveis.size()); // Gera um
-                                                                                                        // numero
-                                                                                                        // aleatorio
-                    } while (funcChecaPosItens(numeroAleatorioItemAux, posicaoDosItens));
-                    arrayItens.add(new Itens(ITEM_TAMANHOEXPLOSAO,
-                            (int) arrayBlocosQuebraveis.get(numeroAleatorioItemAux).getX(),
-                            (int) arrayBlocosQuebraveis.get(numeroAleatorioItemAux).getY()));
-                    posicaoDosItens[indexPosicoes] = numeroAleatorioItemAux;
-                    indexPosicoes++;
-                }
-
-                for (i = 0; i < itemQtdeBombas; i++) {
-                    if (indexPosicoes >= arrayBlocosQuebraveis.size() - 1)
-                        break;
-                    do {
-                        numeroAleatorioItemAux = numeroAleatorio.nextInt(arrayBlocosQuebraveis.size()); // Gera um
-                                                                                                        // numero
-                                                                                                        // aleatorio
-                    } while (funcChecaPosItens(numeroAleatorioItemAux, posicaoDosItens));
-                    arrayItens.add(
-                            new Itens(ITEM_QTDEBOMBAS, (int) arrayBlocosQuebraveis.get(numeroAleatorioItemAux).getX(),
-                                    (int) arrayBlocosQuebraveis.get(numeroAleatorioItemAux).getY()));
-                    posicaoDosItens[indexPosicoes] = numeroAleatorioItemAux;
-                    indexPosicoes++;
-                }
-
-                for (i = 0; i < itemVida; i++) {
-                    if (indexPosicoes >= arrayBlocosQuebraveis.size() - 1)
-                        break;
-                    do {
-                        numeroAleatorioItemAux = numeroAleatorio.nextInt(arrayBlocosQuebraveis.size()); // Gera um
-                                                                                                        // numero
-                                                                                                        // aleatorio
-                    } while (funcChecaPosItens(numeroAleatorioItemAux, posicaoDosItens));
-                    arrayItens.add(new Itens(ITEM_VIDA, (int) arrayBlocosQuebraveis.get(numeroAleatorioItemAux).getX(),
-                            (int) arrayBlocosQuebraveis.get(numeroAleatorioItemAux).getY()));
-                    posicaoDosItens[indexPosicoes] = numeroAleatorioItemAux;
-                    indexPosicoes++;
-                }
-            } catch (Exception e) {
-                System.out.println("Erro Adc Itens: " + e);
+            for (i = 0; i < itemBota; i++) {
+                if (indexPosicoes >= arrayBlocosQuebraveis.size() - 1)
+                    break;
+                do {
+                    numeroAleatorioItemAux = numeroAleatorio.nextInt(arrayBlocosQuebraveis.size()); // Gera um
+                                                                                                    // numero
+                                                                                                    // aleatorio
+                } while (funcChecaPosItens(numeroAleatorioItemAux, posicaoDosItens));
+                arrayItens.add(new Itens(ITEM_BOTA, (int) arrayBlocosQuebraveis.get(numeroAleatorioItemAux).getX(),
+                        (int) arrayBlocosQuebraveis.get(numeroAleatorioItemAux).getY()));
+                posicaoDosItens[indexPosicoes] = numeroAleatorioItemAux;
+                indexPosicoes++;
             }
+
+            for (i = 0; i < itemTamanhoExplosao; i++) {
+                if (indexPosicoes >= arrayBlocosQuebraveis.size() - 1)
+                    break;
+                do {
+                    numeroAleatorioItemAux = numeroAleatorio.nextInt(arrayBlocosQuebraveis.size()); // Gera um
+                                                                                                    // numero
+                                                                                                    // aleatorio
+                } while (funcChecaPosItens(numeroAleatorioItemAux, posicaoDosItens));
+                arrayItens.add(new Itens(ITEM_TAMANHOEXPLOSAO,
+                        (int) arrayBlocosQuebraveis.get(numeroAleatorioItemAux).getX(),
+                        (int) arrayBlocosQuebraveis.get(numeroAleatorioItemAux).getY()));
+                posicaoDosItens[indexPosicoes] = numeroAleatorioItemAux;
+                indexPosicoes++;
+            }
+
+            for (i = 0; i < itemQtdeBombas; i++) {
+                if (indexPosicoes >= arrayBlocosQuebraveis.size() - 1)
+                    break;
+                do {
+                    numeroAleatorioItemAux = numeroAleatorio.nextInt(arrayBlocosQuebraveis.size()); // Gera um
+                                                                                                    // numero
+                                                                                                    // aleatorio
+                } while (funcChecaPosItens(numeroAleatorioItemAux, posicaoDosItens));
+                arrayItens.add(
+                        new Itens(ITEM_QTDEBOMBAS, (int) arrayBlocosQuebraveis.get(numeroAleatorioItemAux).getX(),
+                                (int) arrayBlocosQuebraveis.get(numeroAleatorioItemAux).getY()));
+                posicaoDosItens[indexPosicoes] = numeroAleatorioItemAux;
+                indexPosicoes++;
+            }
+
+            for (i = 0; i < itemVida; i++) {
+                if (indexPosicoes >= arrayBlocosQuebraveis.size() - 1)
+                    break;
+                do {
+                    numeroAleatorioItemAux = numeroAleatorio.nextInt(arrayBlocosQuebraveis.size()); // Gera um
+                                                                                                    // numero
+                                                                                                    // aleatorio
+                } while (funcChecaPosItens(numeroAleatorioItemAux, posicaoDosItens));
+                arrayItens.add(new Itens(ITEM_VIDA, (int) arrayBlocosQuebraveis.get(numeroAleatorioItemAux).getX(),
+                        (int) arrayBlocosQuebraveis.get(numeroAleatorioItemAux).getY()));
+                posicaoDosItens[indexPosicoes] = numeroAleatorioItemAux;
+                indexPosicoes++;
+            }
+        } catch (Exception e) {
+            System.out.println("Erro Adc Itens: " + e);
         }
+    }
 
         void funcAdcInimigos(int mult) {
-            try {
-                arrayInimigos = new ArrayList<>(10);
-                if (mult == MULTIPLAYER1) {
+        try {
+            arrayInimigos = new ArrayList<>(10);
+            if (mult == MULTIPLAYER1) {
 
-                } else if (mult == MULTIPLAYER2) {
-                    arrayInimigos.add(new Inimigo(400, 50, 2, HORIZONTAL, morcegoDireita, morcegoEsquerda));
-                    arrayInimigos.add(new Inimigo(850, 300, 2, VERTICAL, morcegoCima, morcegoBaixo));
-                    arrayInimigos.add(new Inimigo(250, 250, 2, HORIZONTAL, magoDireita, magoEsquerda));
-                    arrayInimigos.add(new Inimigo(250, 50, 1, HORIZONTAL, cavaleiroDireita, cavaleiroEsquerda));
-                    arrayInimigos.add(new Inimigo(750, 250, 2, VERTICAL, magoCima, magoBaixo));
-                    arrayInimigos.add(new Inimigo(450, 250, 1, VERTICAL, cavaleiroCima, cavaleiroBaixo));
-                } else if (mult == MULTIPLAYER3) {
-                    arrayInimigos.add(new Inimigo(550, 550, 2, HORIZONTAL, bauDireita, bauEsquerda));
-                    arrayInimigos.add(new Inimigo(250, 250, 2, VERTICAL, bauCima, bauBaixo));
-                    arrayInimigos.add(new Inimigo(200, 50, 2, HORIZONTAL, jenovaDireita, jenovaEsquerda));
-                    arrayInimigos.add(new Inimigo(550, 450, 2, VERTICAL, jenovaCima, jenovaBaixo));
-                    arrayInimigos.add(new Inimigo(150, 150, 2, HORIZONTAL, bruxaDireita, bruxaEsquerda));
-                    arrayInimigos.add(new Inimigo(650, 150, 2, VERTICAL, bruxaCima, bruxaBaixo));
-                } else if (mult == MULTIPLAYER4) {
-                    arrayInimigos.add(new Inimigo(300, 550, 2, HORIZONTAL, verdeDireita, verdeEsquerda));
-                    arrayInimigos.add(new Inimigo(650, 250, 2, VERTICAL, verdeCima, verdeBaixo));
-                    arrayInimigos.add(new Inimigo(200, 450, 2, HORIZONTAL, elfoDireita, elfoEsquerda));
-                    arrayInimigos.add(new Inimigo(550, 450, 2, VERTICAL, elfoCima, elfoBaixo));
-                    arrayInimigos.add(new Inimigo(150, 150, 2, HORIZONTAL, andarilhoDireita, andarilhoEsquerda));
-                    arrayInimigos.add(new Inimigo(850, 150, 2, VERTICAL, andarilhoCima, andarilhoBaixo));
-                }
-            } catch (Exception e) {
-                System.out.println("Erro Adc Inimigos: " + e);
+            } else if (mult == MULTIPLAYER2) {
+                arrayInimigos.add(new Inimigo(400, 50, 2, HORIZONTAL, morcegoDireita, morcegoEsquerda));
+                arrayInimigos.add(new Inimigo(850, 300, 2, VERTICAL, morcegoCima, morcegoBaixo));
+                arrayInimigos.add(new Inimigo(250, 250, 2, HORIZONTAL, magoDireita, magoEsquerda));
+                arrayInimigos.add(new Inimigo(250, 50, 1, HORIZONTAL, cavaleiroDireita, cavaleiroEsquerda));
+                arrayInimigos.add(new Inimigo(750, 250, 2, VERTICAL, magoCima, magoBaixo));
+                arrayInimigos.add(new Inimigo(450, 250, 1, VERTICAL, cavaleiroCima, cavaleiroBaixo));
+            } else if (mult == MULTIPLAYER3) {
+                arrayInimigos.add(new Inimigo(550, 550, 2, HORIZONTAL, bauDireita, bauEsquerda));
+                arrayInimigos.add(new Inimigo(250, 250, 2, VERTICAL, bauCima, bauBaixo));
+                arrayInimigos.add(new Inimigo(200, 50, 2, HORIZONTAL, jenovaDireita, jenovaEsquerda));
+                arrayInimigos.add(new Inimigo(550, 450, 2, VERTICAL, jenovaCima, jenovaBaixo));
+                arrayInimigos.add(new Inimigo(150, 150, 2, HORIZONTAL, bruxaDireita, bruxaEsquerda));
+                arrayInimigos.add(new Inimigo(650, 150, 2, VERTICAL, bruxaCima, bruxaBaixo));
+            } else if (mult == MULTIPLAYER4) {
+                arrayInimigos.add(new Inimigo(300, 550, 2, HORIZONTAL, verdeDireita, verdeEsquerda));
+                arrayInimigos.add(new Inimigo(650, 250, 2, VERTICAL, verdeCima, verdeBaixo));
+                arrayInimigos.add(new Inimigo(200, 450, 2, HORIZONTAL, elfoDireita, elfoEsquerda));
+                arrayInimigos.add(new Inimigo(550, 450, 2, VERTICAL, elfoCima, elfoBaixo));
+                arrayInimigos.add(new Inimigo(150, 150, 2, HORIZONTAL, andarilhoDireita, andarilhoEsquerda));
+                arrayInimigos.add(new Inimigo(850, 150, 2, VERTICAL, andarilhoCima, andarilhoBaixo));
             }
+        } catch (Exception e) {
+            System.out.println("Erro Adc Inimigos: " + e);
         }
+    }
 
-        boolean funcChecaPosItens(int valor, int[] arrayDosItens) { // Serve para não repetir itens na mesma posição
+      boolean funcChecaPosItens(int valor, int[] arrayDosItens) { // Serve para não repetir itens na mesma posição
             for (int arrayDosIten : arrayDosItens) {
                 if (valor == arrayDosIten) {
                     return true;
@@ -677,6 +554,7 @@ class Servidor extends Thread {
             }
             return false;
         }
+    }
 
     boolean intersBombas(Rectangle checkR) { // Movimentação player vs bomba
         for (Bomba bombaBlock : arrayBombas) {
@@ -916,6 +794,15 @@ class Servidor extends Thread {
 
         Player(int tipoPersonagem) {
             try {
+                if(tipoPersonagem == PERS1){
+
+                } else if (tipoPersonagem == PERS2){
+
+                } else if (tipoPersonagem == PERS3){
+                    
+                } else {
+
+                }
                 imagensPlayer[PARADO] = new ImageIcon("Resources//Models//playerModel" + tipoPersonagem + "Parado.png")
                         .getImage();
                 imagensPlayer[ANDANDO_DIREITA] = new ImageIcon(
@@ -944,23 +831,14 @@ class Servidor extends Thread {
             if (this.velocidade > 4) {
                 this.velocidade--;
                 this.qtdeItemBota--;
-                somaScore -= 100;
-                labelScore.setText(String.valueOf(somaScore));
-                labelQuantidadeItemBota.setText("x" + player1.qtdeItemBota);
             }
             if (this.bombaSize > 1) {
                 this.bombaSize--;
                 this.qtdeItemExplosao--;
-                somaScore -= 100;
-                labelScore.setText(String.valueOf(somaScore));
-                labelQuantidadeItemExplosao.setText("x" + player1.qtdeItemExplosao);
             }
             if (this.maxBombas > 2) {
                 this.maxBombas--;
                 this.qtdeItemBomba--;
-                somaScore -= 100;
-                labelScore.setText(String.valueOf(somaScore));
-                labelQuantidadeItemBomba.setText("x" + player1.qtdeItemBomba);
             }
         }
 
@@ -1105,8 +983,8 @@ class Servidor extends Thread {
         try {
             mult = new FaseMultiplayer(MULTIPLAYER1);
             tempo = new Timer(1000, e -> {
-                if (mult.tempoCont > 0) {
-                    mult.tempoCont--;
+                if (tempoCont > 0) {
+                    tempoCont--;
                 }
             });
             refreshModels.start();
@@ -1116,6 +994,12 @@ class Servidor extends Thread {
     }
 
     Servidor() {
+        try{
+            ServerSocket serverSocket = new ServerSocket();
+        }
+        catch(Exception e){
+            System.out.println("\nErro no serverSocket.\n");
+        }
         
     }
 
