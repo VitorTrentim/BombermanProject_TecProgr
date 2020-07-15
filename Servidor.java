@@ -17,16 +17,27 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.NoSuchElementException;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 
 class Servidor extends Thread {
+    //// DADOS DE CONEXÃO
+    ServerSocket serverSocket = null;
+    DataOutputStream serverOutputStream[];
+    boolean boolGameRunning = false;
+    Socket arraySocketsPlayers[] = new Socket[4];
+
     //// DADOS PLAYER
     final int PERS1 = 1, PERS2 = 2, PERS3 = 3, PERS4 = 4;
-    Player arrayPlayers[] = {new Player(PERS1), new Player(PERS2), new Player(PERS3), new Player(PERS4)};
+    Player arrayPlayers[] = new Player[4];
     int quantidadeDePlayers = 0;
 
     final int PARADO = 0, ANDANDO_DIREITA = 1, ANDANDO_ESQUERDA = 2, ANDANDO_FRENTE = 3, ANDANDO_COSTAS = 4,
             DANIFICADO = 5, LENGTH_IMAGENS_PLAYER = 6;
     String nome_do_Player, score_do_Player = null;
+
     //// DADOS INIMIGO
     String morcegoDireita = "morcegoDireita", morcegoEsquerda = "morcegoEsquerda", morcegoCima = "morcegoCima",
             morcegoBaixo = "morcegoBaixo";
@@ -144,7 +155,6 @@ class Servidor extends Thread {
         for (int i = 0 ; i < 4; i++){
             if (arrayPlayers[i] != null && arrayPlayers[i].boolDanoRecente) {
                 if (arrayPlayers[i].danoRecente++ == 0) {
-                    arrayPlayers[i].personagem = arrayPlayers[i].imagensPlayer[DANIFICADO];
                     arrayPlayers[i].boolStunned = true;
                 }
                 if (arrayPlayers[i].danoRecente >= 20) { // numero de "ticks" de imobilização
@@ -784,16 +794,29 @@ class Servidor extends Thread {
         }
     }
 
-    class Player {
+    class Player extends Thread {
+        //// alteração socket
+        Socket clientSocket;
+        DataOutputStream saida;
+        int tipoPersonagem;
+        int x, y;
+        boolean clienteVivo[] = { true, true };
+        ////
         int estado = PARADO, X = 60, Y = 40, maxBombas = 2, bombaSize = 1; // bombaSize = tamanho da bomba do player
-        Image[] imagensPlayer = new Image[LENGTH_IMAGENS_PLAYER];
-        Image personagem;
+        //Image[] imagensPlayer = new Image[LENGTH_IMAGENS_PLAYER];
+        //Image personagem;
         int vida = 3, danoRecente = 0, velocidade = 4, qtdeItemBota, qtdeItemBomba, qtdeItemExplosao;
         boolean boolDanoRecente = false, boolStunned = false, moveRight = false, moveLeft = false, moveDown = false,
                 moveUp = false;
 
-        Player(int tipoPersonagem) {
+        Player(int tipoPersonagem, Socket clientSocket, DataOutputStream saida) {
             try {
+
+                this.clientSocket = clientSocket;
+                this.saida = saida;
+                quantidadeDePlayers = tipoPersonagem;
+                tipoPersonagem++;
+
                 if(tipoPersonagem == PERS1){
 
                 } else if (tipoPersonagem == PERS2){
@@ -803,24 +826,9 @@ class Servidor extends Thread {
                 } else {
 
                 }
-                imagensPlayer[PARADO] = new ImageIcon("Resources//Models//playerModel" + tipoPersonagem + "Parado.png")
-                        .getImage();
-                imagensPlayer[ANDANDO_DIREITA] = new ImageIcon(
-                        "Resources//Models//playerModel" + tipoPersonagem + "Dir.gif").getImage();
-                imagensPlayer[ANDANDO_ESQUERDA] = new ImageIcon(
-                        "Resources//Models//playerModel" + tipoPersonagem + "Esq.gif").getImage();
-                imagensPlayer[ANDANDO_FRENTE] = new ImageIcon(
-                        "Resources//Models//playerModel" + tipoPersonagem + "Frente.gif").getImage();
-                imagensPlayer[ANDANDO_COSTAS] = new ImageIcon(
-                        "Resources//Models//playerModel" + tipoPersonagem + "Costas.gif").getImage();
-                imagensPlayer[DANIFICADO] = new ImageIcon(
-                        "Resources//Models//playerModel" + tipoPersonagem + "Damaged.gif").getImage();
-
-                personagem = imagensPlayer[PARADO];
             } catch (Exception erroPlayer) {
                 System.out.println("Erro (Player): " + erroPlayer);
             }
-            qtdeItemBomba = qtdeItemBota = qtdeItemExplosao = 0;
         }
 
         void danificado() {
@@ -857,6 +865,51 @@ class Servidor extends Thread {
         public int getVida() {
             return vida;
         }
+
+
+        //// alteração
+
+        public void run() {
+            try {
+              DataInputStream inputStream = new DataInputStream(clientSocket.getInputStream());
+              serverOutputStream[tipoPersonagem] = new DataOutputStream(clientSocket.getOutputStream());
+              String codigoSocket;
+        
+              do {
+                codigoSocket = inputStream.readUTF();
+                switch (codigoSocket) {
+                  case "pos":
+                    break;
+                  case "bomba":
+                    break;
+                }
+                try {
+                    saida.flush();
+                }
+                catch (IOException e) {
+                }
+              } while (boolGameRunning);
+        
+              serverOutputStream[tipoPersonagem].close();
+              inputStream.close();
+              clientSocket.close();
+        
+            }catch(IOException e){
+            try {
+              clientSocket.close();
+            }
+            catch (IOException e1) {
+                e1.printStackTrace();
+            }
+          }
+          catch(NoSuchElementException e){
+          }
+          catch(Exception ex){
+          }
+          }
+
+        ////
+
     }
 
     class Inimigo {
@@ -977,8 +1030,6 @@ class Servidor extends Thread {
 
     }
 
-
-
     public void carregaMultiplayer() {
         try {
             mult = new FaseMultiplayer(MULTIPLAYER1);
@@ -995,14 +1046,23 @@ class Servidor extends Thread {
 
     Servidor() {
         try{
-            ServerSocket serverSocket = new ServerSocket();
+            serverSocket = new ServerSocket(80);
         }
         catch(Exception e){
             System.out.println("\nErro no serverSocket.\n");
         }
-        
-    }
+        serverOutputStream = new DataOutputStream[quantidadeDePlayers];
 
+        for (int i = 0; i < quantidadeDePlayers; i++) {
+            arraySocketsPlayers[i] = null;
+            try {
+                arraySocketsPlayers[i] = serverSocket.accept();
+            } catch (IOException e) {
+              System.out.println("Erro ao aceitar a conexão." + e);
+              System.exit(1);
+            }
+    }
+}
     static public void main(String[] args) throws InterruptedException {
         new Servidor();
     }
