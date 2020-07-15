@@ -27,11 +27,12 @@ class Servidor extends Thread {
     ServerSocket serverSocket = null;
     DataOutputStream serverOutputStream[];
     boolean boolGameRunning = false;
-    Socket arraySocketsPlayers[] = new Socket[4];
+    Socket arrayPlayerSockets[] = new Socket[4];
+
 
     //// DADOS PLAYER
     final int PERS1 = 1, PERS2 = 2, PERS3 = 3, PERS4 = 4;
-    Player arrayPlayers[] = new Player[4];
+    PlayerThread arrayPlayerThread[] = new PlayerThread[4];
     int quantidadeDePlayers = 0;
 
     final int PARADO = 0, ANDANDO_DIREITA = 1, ANDANDO_ESQUERDA = 2, ANDANDO_FRENTE = 3, ANDANDO_COSTAS = 4,
@@ -103,7 +104,7 @@ class Servidor extends Thread {
             if (boolLastBombaBlockPlayer) {
                 if (!arrayBombas.isEmpty()) {
                     for(i = 0; i < 4; i++){
-                        if (!new Rectangle(arrayPlayers[i].X, arrayPlayers[i].Y + 15, 35, 40).intersects(arrayBombas.get(arrayBombas.size() - 1).getHitBox())) {
+                        if (!new Rectangle(arrayPlayerThread[i].X, arrayPlayerThread[i].Y + 15, 35, 40).intersects(arrayBombas.get(arrayBombas.size() - 1).getHitBox())) {
                         arrayBombas.get(arrayBombas.size() - 1).boolBloqueandoPlayer = true;
                         boolLastBombaBlockPlayer = false;
                         }
@@ -142,8 +143,8 @@ class Servidor extends Thread {
     void checkPlayerEnemyColision() {
         for (int i = 0; i < mult.arrayInimigos.size(); i++) {
             for (int j = 0; j < 4 ; j++){
-                if (arrayPlayers[i] != null && !arrayPlayers[i].boolDanoRecente && arrayPlayers[i].getHitBox().intersects(mult.arrayInimigos.get(i).getBounds())) {
-                    arrayPlayers[i].danificado();
+                if (arrayPlayerThread[i] != null && !arrayPlayerThread[i].boolDanoRecente && arrayPlayerThread[i].getHitBox().intersects(mult.arrayInimigos.get(i).getBounds())) {
+                    arrayPlayerThread[i].danificado();
             }
         }
             if (mult.arrayInimigos.isEmpty())
@@ -153,16 +154,16 @@ class Servidor extends Thread {
 
     void damageDelayControl() {
         for (int i = 0 ; i < 4; i++){
-            if (arrayPlayers[i] != null && arrayPlayers[i].boolDanoRecente) {
-                if (arrayPlayers[i].danoRecente++ == 0) {
-                    arrayPlayers[i].boolStunned = true;
+            if (arrayPlayerThread[i] != null && arrayPlayerThread[i].boolDanoRecente) {
+                if (arrayPlayerThread[i].danoRecente++ == 0) {
+                    arrayPlayerThread[i].boolStunned = true;
                 }
-                if (arrayPlayers[i].danoRecente >= 20) { // numero de "ticks" de imobilização
-                    arrayPlayers[i].boolStunned = false;
+                if (arrayPlayerThread[i].danoRecente >= 20) { // numero de "ticks" de imobilização
+                    arrayPlayerThread[i].boolStunned = false;
                 }
-                if (arrayPlayers[i].danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
-                    arrayPlayers[i].boolDanoRecente = false;
-                    arrayPlayers[i].danoRecente = 0;
+                if (arrayPlayerThread[i].danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
+                    arrayPlayerThread[i].boolDanoRecente = false;
+                    arrayPlayerThread[i].danoRecente = 0;
                 }
             }
         }
@@ -172,19 +173,19 @@ class Servidor extends Thread {
     void checkPlayerItemColision() {
         for (int i = 0; i < arrayItens.size(); i++) {
             for (int j = 0 ; j < 4 ; j++){
-                if (arrayPlayers[i] != null && arrayPlayers[i].getHitBox().intersects(arrayItens.get(i).getBounds())) {
+                if (arrayPlayerThread[i] != null && arrayPlayerThread[i].getHitBox().intersects(arrayItens.get(i).getBounds())) {
                     if (arrayItens.get(i).item == ITEM_BOTA) {
-                        arrayPlayers[i].qtdeItemBota++;
-                        arrayPlayers[i].velocidade++; // Se houver uma intersecção do player com o item, incrementa velocidade
+                        arrayPlayerThread[i].qtdeItemBota++;
+                        arrayPlayerThread[i].velocidade++; // Se houver uma intersecção do player com o item, incrementa velocidade
                     } else if (arrayItens.get(i).item == ITEM_TAMANHOEXPLOSAO) {
-                        arrayPlayers[i].qtdeItemExplosao++;
-                        arrayPlayers[i].bombaSize++;
+                        arrayPlayerThread[i].qtdeItemExplosao++;
+                        arrayPlayerThread[i].bombaSize++;
                     } else if (arrayItens.get(i).item == ITEM_QTDEBOMBAS) {
-                        arrayPlayers[i].qtdeItemBomba++;
-                        arrayPlayers[i].maxBombas++;
+                        arrayPlayerThread[i].qtdeItemBomba++;
+                        arrayPlayerThread[i].maxBombas++;
                     } else {
-                        if (arrayPlayers[i].getVida() < 3) {
-                            arrayPlayers[i].vida++;
+                        if (arrayPlayerThread[i].vida < 3) {
+                            arrayPlayerThread[i].vida++;
                         }
                     }
                     arrayItens.remove(i);
@@ -600,8 +601,7 @@ class Servidor extends Thread {
         return true;
     }
 
-    boolean intersBlocosQuebraveis(Rectangle checkR, ArrayList<Rectangle> arrayBlocosQuebraveis) { // Retorna TRUE se
-                                                                                                   // não há colisão
+    boolean intersBlocosQuebraveis(Rectangle checkR, ArrayList<Rectangle> arrayBlocosQuebraveis) { // Retorna TRUE se não há colisão
         for (Rectangle arrayBlocosQuebravei : arrayBlocosQuebraveis) {
             if (checkR.intersects(arrayBlocosQuebravei)) {
                 return false;
@@ -610,8 +610,7 @@ class Servidor extends Thread {
         return true;
     }
 
-    boolean inimigoIntersX(Rectangle checkR, ArrayList<Rectangle> arrayBlocosQuebraveis) { // Retorna TRUE se não há
-                                                                                           // colisão
+    boolean inimigoIntersX(Rectangle checkR, ArrayList<Rectangle> arrayBlocosQuebraveis) { // Retorna TRUE se não há colisão
         for (Rectangle arrayBlocosQuebravei : arrayBlocosQuebraveis) {
             if (arrayBlocosQuebravei.getY() == checkR.getY()) {
                 if (arrayBlocosQuebravei.intersects(checkR) && arrayBlocosQuebravei.intersects(checkR)) {
@@ -622,8 +621,7 @@ class Servidor extends Thread {
         return true;
     }
 
-    boolean inimigoIntersY(Rectangle checkR, ArrayList<Rectangle> arrayBlocosQuebraveis) { // Retorna TRUE se não há
-                                                                                           // colisão
+    boolean inimigoIntersY(Rectangle checkR, ArrayList<Rectangle> arrayBlocosQuebraveis) { // Retorna TRUE se não há colisão
         for (Rectangle arrayBlocosQuebravei : arrayBlocosQuebraveis) {
             if (arrayBlocosQuebravei.getX() == checkR.getX()) {
                 if (arrayBlocosQuebravei.intersects(checkR) && arrayBlocosQuebravei.intersects(checkR)) {
@@ -794,124 +792,6 @@ class Servidor extends Thread {
         }
     }
 
-    class Player extends Thread {
-        //// alteração socket
-        Socket clientSocket;
-        DataOutputStream saida;
-        int tipoPersonagem;
-        int x, y;
-        boolean clienteVivo[] = { true, true };
-        ////
-        int estado = PARADO, X = 60, Y = 40, maxBombas = 2, bombaSize = 1; // bombaSize = tamanho da bomba do player
-        //Image[] imagensPlayer = new Image[LENGTH_IMAGENS_PLAYER];
-        //Image personagem;
-        int vida = 3, danoRecente = 0, velocidade = 4, qtdeItemBota, qtdeItemBomba, qtdeItemExplosao;
-        boolean boolDanoRecente = false, boolStunned = false, moveRight = false, moveLeft = false, moveDown = false,
-                moveUp = false;
-
-        Player(int tipoPersonagem, Socket clientSocket, DataOutputStream saida) {
-            try {
-
-                this.clientSocket = clientSocket;
-                this.saida = saida;
-                quantidadeDePlayers = tipoPersonagem;
-                tipoPersonagem++;
-
-                if(tipoPersonagem == PERS1){
-
-                } else if (tipoPersonagem == PERS2){
-
-                } else if (tipoPersonagem == PERS3){
-                    
-                } else {
-
-                }
-            } catch (Exception erroPlayer) {
-                System.out.println("Erro (Player): " + erroPlayer);
-            }
-        }
-
-        void danificado() {
-            this.vida--;
-            this.boolDanoRecente = true;
-            this.danoRecente = 0;
-
-            if (this.velocidade > 4) {
-                this.velocidade--;
-                this.qtdeItemBota--;
-            }
-            if (this.bombaSize > 1) {
-                this.bombaSize--;
-                this.qtdeItemExplosao--;
-            }
-            if (this.maxBombas > 2) {
-                this.maxBombas--;
-                this.qtdeItemBomba--;
-            }
-        }
-
-        Rectangle getHitBox() { // hitbox do player
-            return new Rectangle(this.X, this.Y + 15, 30, 35);
-        }
-
-        public int getX() {
-            return this.X;
-        }
-
-        public int getY() {
-            return this.Y;
-        }
-
-        public int getVida() {
-            return vida;
-        }
-
-
-        //// alteração
-
-        public void run() {
-            try {
-              DataInputStream inputStream = new DataInputStream(clientSocket.getInputStream());
-              serverOutputStream[tipoPersonagem] = new DataOutputStream(clientSocket.getOutputStream());
-              String codigoSocket;
-        
-              do {
-                codigoSocket = inputStream.readUTF();
-                switch (codigoSocket) {
-                  case "pos":
-                    break;
-                  case "bomba":
-                    break;
-                }
-                try {
-                    saida.flush();
-                }
-                catch (IOException e) {
-                }
-              } while (boolGameRunning);
-        
-              serverOutputStream[tipoPersonagem].close();
-              inputStream.close();
-              clientSocket.close();
-        
-            }catch(IOException e){
-            try {
-              clientSocket.close();
-            }
-            catch (IOException e1) {
-                e1.printStackTrace();
-            }
-          }
-          catch(NoSuchElementException e){
-          }
-          catch(Exception ex){
-          }
-          }
-
-        ////
-
-    }
-
     class Inimigo {
         final int HORIZONTAL = 0;
         int x, y, sentido;
@@ -1030,17 +910,86 @@ class Servidor extends Thread {
 
     }
 
-    public void carregaMultiplayer() {
-        try {
-            mult = new FaseMultiplayer(MULTIPLAYER1);
-            tempo = new Timer(1000, e -> {
-                if (tempoCont > 0) {
-                    tempoCont--;
+    class PlayerThread extends Thread {
+        ////
+        int vida = 3, danoRecente = 0, velocidade = 4, qtdeItemBota, qtdeItemBomba, qtdeItemExplosao;
+        boolean boolDanoRecente = false, boolStunned = false, moveRight = false, moveLeft = false, moveDown = false, moveUp = false;
+        int estado = PARADO, X = 60, Y = 40, maxBombas = 2, bombaSize = 1;
+
+        //// alteração socket
+        Socket playerSocket;
+        DataOutputStream streamEnviaAoCliente;
+        DataInputStream streamRecebeDoCliente;
+
+        PlayerThread(Socket socketRecebido) {
+            try {
+                this.playerSocket = socketRecebido;
+
+            } catch (Exception erroPlayer) {
+                System.out.println("Erro (Player): " + erroPlayer);
+            }
+        }
+
+        public void run() {
+            try {
+                streamRecebeDoCliente = new DataInputStream(playerSocket.getInputStream());
+                streamEnviaAoCliente = new DataOutputStream(playerSocket.getOutputStream());
+                String codigoSocket;
+
+                do {
+                    codigoSocket = streamRecebeDoCliente.readUTF();
+                    switch (codigoSocket) {
+                        case "pos":
+                            break;
+                        case "bomba":
+                            break;
+                    }
+                    try {
+                        streamEnviaAoCliente.flush();
+                    }
+                    catch (IOException e) {
+                    }
+                } while (boolGameRunning);
+
+                streamEnviaAoCliente.close();
+                streamRecebeDoCliente.close();
+                playerSocket.close();
+
+            }catch(IOException e){
+                try {
+                    playerSocket.close();
                 }
-            });
-            refreshModels.start();
-        } catch (Exception e) {
-            System.out.println("Erro carregaMultiplayer: " + e);
+                catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+            catch(NoSuchElementException e){
+            }
+            catch(Exception ex){
+            }
+        }
+
+        Rectangle getHitBox(){ //hitbox do player
+            return new Rectangle(this.X,this.Y+15,30,35);
+        }
+
+        void danificado(){
+            this.vida--;
+            this.boolDanoRecente = true;
+            this.danoRecente = 0;
+
+            if(this.velocidade>4) {
+                this.velocidade--;
+                this.qtdeItemBota--;
+            }
+            if(this.bombaSize>1) {
+                this.bombaSize--;
+                this.qtdeItemExplosao--;
+            }
+            if(this.maxBombas > 2) {
+                this.maxBombas--;
+                this.qtdeItemBomba--;
+            }
         }
     }
 
@@ -1051,17 +1000,41 @@ class Servidor extends Thread {
         catch(Exception e){
             System.out.println("\nErro no serverSocket.\n");
         }
-        serverOutputStream = new DataOutputStream[quantidadeDePlayers];
 
-        for (int i = 0; i < quantidadeDePlayers; i++) {
-            arraySocketsPlayers[i] = null;
+        System.out.println("\nAguardando primeira conexão\n");
+
+        try { // Tenta a conexão com o primeiro player
+            arrayPlayerSockets[0] = serverSocket.accept();
+        } catch (IOException e) {
+            System.out.println("Erro ao aceitar a conexão." + e);
+            System.exit(1);
+        }
+
+        arrayPlayerThread[0] = new PlayerThread(arrayPlayerSockets[0]);
+        arrayPlayerThread[0].start();
+        do{ // Requere a quantidade de players
+            System.out.println("\nAguardando qtde players\n");
+            try{
+                quantidadeDePlayers = arrayPlayerThread[0].streamRecebeDoCliente.readInt();
+                System.out.println("\nLeu quantidadeDePlayers = \n" + quantidadeDePlayers);
+            }catch (Exception eRead){
+                System.out.println("\nErro no readInt (quantidade de players) "+eRead);
+            }
+
+        }while(quantidadeDePlayers == 0);
+
+        for (int i = 1; i < quantidadeDePlayers; i++) { // Conecta os players restantes
+            arrayPlayerSockets[i] = null;
             try {
-                arraySocketsPlayers[i] = serverSocket.accept();
+                arrayPlayerSockets[i] = serverSocket.accept();
+
             } catch (IOException e) {
               System.out.println("Erro ao aceitar a conexão." + e);
               System.exit(1);
             }
-    }
+            arrayPlayerThread[i] = new PlayerThread(arrayPlayerSockets[i]);
+            arrayPlayerThread[i].start();
+        }
 }
     static public void main(String[] args) throws InterruptedException {
         new Servidor();
