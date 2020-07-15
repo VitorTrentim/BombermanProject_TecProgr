@@ -3,7 +3,6 @@ Trabalho de Técnicas de Programaçao - BSI UNESP Bauru
 Ettore Scolar e Vitor Trentim
 */
 
-
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
@@ -14,13 +13,18 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.*;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Random;
 
 class Cliente extends JFrame {
+    /// Rede
+    Rede rede = new Rede(this, "127.0.0.1", 12345);
     //// DADOS PLAYER
-    final int PERS_1 = 1, PERS_2 = 2, PERS_3 = 3, PERS_4 = 4;
-    Player currentPlayer = new Player(PERS_1);
+    final int PERS1 = 1, PERS2 = 2, PERS3 = 3, PERS4 = 4;
+    Player arrayPlayers[] = {new Player(PERS1), new Player(PERS2), new Player(PERS3), new Player(PERS4)};
+    Player currentPlayer = new Player(PERS1);
     final int PARADO = 0, ANDANDO_DIREITA = 1,ANDANDO_ESQUERDA = 2, ANDANDO_FRENTE = 3, ANDANDO_COSTAS = 4, DANIFICADO = 5, LENGTH_IMAGENS_PLAYER = 6;
     String nome_do_Player, score_do_Player = null;
 
@@ -73,98 +77,91 @@ class Cliente extends JFrame {
     boolean passarFase = false, ultimaFase = false, escreveu = false;
     Fase mult;
     Fase fase;
+    boolean single, multiplay;
 
     //////////////////////////////////////////////////////
-
-    public void playMusic (String caminho){
-        try{
-            File musicPath = new File(caminho);
-            AudioInputStream audioInput = AudioSystem.getAudioInputStream(musicPath);
-            Clip clip = AudioSystem.getClip();
-            clip.open(audioInput);
-            FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
-            gainControl.setValue(-25.0f); // Diminui o volume
-            clip.start();
-
-        }
-        catch (Exception e){
-            System.out.println(e.getMessage());
-        }
-    }
 
     Timer refreshModels = new Timer(25, e -> {
         int i;
         try {
             
             //// Controlar o dano recente do player
-            if (currentPlayer.boolDanoRecente) {
-                if (currentPlayer.danoRecente++ == 0) {
-                    checkVida();
-                    scoreVida -=100;
-                    currentPlayer.personagem = currentPlayer.imagensPlayer[DANIFICADO];
-                    currentPlayer.boolStunned = true;
+            while (rede.continua()) {
+                rede.recebePosicoesPlayers(arrayPlayers);
+                String tipo = rede.recebeMensagem();
+                if (tipo == "Vida") {
+                    if (currentPlayer.boolDanoRecente) {
+                        if (currentPlayer.danoRecente++ == 0) {
+                            checkVida();
+                            scoreVida -= 100;
+                            currentPlayer.personagem = currentPlayer.imagensPlayer[DANIFICADO];
+                            currentPlayer.boolStunned = true;
+                        }
+                        if (currentPlayer.danoRecente >= 20) { // numero de "ticks" de imobilização
+                            currentPlayer.boolStunned = false;
+                        }
+                        if (currentPlayer.danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
+                            currentPlayer.boolDanoRecente = false;
+                            currentPlayer.danoRecente = 0;
+                        }
+                    }
+                 }
+
+                /////////// Movimentação do player
+                if (tipo == "pos") {
+                    if (!currentPlayer.boolStunned && currentPlayer.getVida() > 0) { // Se não tomou dano recente (stun) e está vivo
+                        if (currentPlayer.estado == PARADO) {
+                            currentPlayer.personagem = currentPlayer.imagensPlayer[PARADO];
+                        } else if (currentPlayer.estado == ANDANDO_DIREITA) {
+                            currentPlayer.personagem = currentPlayer.imagensPlayer[ANDANDO_DIREITA];
+                        } else if (currentPlayer.estado == ANDANDO_ESQUERDA) {
+                            currentPlayer.personagem = currentPlayer.imagensPlayer[ANDANDO_ESQUERDA];
+                        } else if (currentPlayer.estado == ANDANDO_FRENTE) {
+                            currentPlayer.personagem = currentPlayer.imagensPlayer[ANDANDO_FRENTE];
+                        } else if (currentPlayer.estado == ANDANDO_COSTAS) {
+                            currentPlayer.personagem = currentPlayer.imagensPlayer[ANDANDO_COSTAS];
+                        } else {
+                            currentPlayer.personagem = currentPlayer.imagensPlayer[PARADO];
+                        }
+                        if (currentPlayer.moveRight) { //DIREITA
+                            if (intersBombas(new Rectangle(currentPlayer.X + currentPlayer.velocidade, currentPlayer.Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(currentPlayer.X + currentPlayer.velocidade, currentPlayer.Y + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(currentPlayer.X + currentPlayer.velocidade, currentPlayer.Y + 15, 30, 35), fase.arrayBlocosQuebraveis) && currentPlayer.X <= 856) {
+                                currentPlayer.X += currentPlayer.velocidade;
+                            }
+                            if (currentPlayer.estado != ANDANDO_DIREITA && !currentPlayer.moveDown && !currentPlayer.moveUp) {
+                                currentPlayer.estado = ANDANDO_DIREITA;
+                            }
+                        } else if (currentPlayer.moveLeft) { //ESQUERDA
+                            if (intersBombas(new Rectangle(currentPlayer.X - currentPlayer.velocidade, currentPlayer.Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(currentPlayer.X - currentPlayer.velocidade, currentPlayer.Y + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(currentPlayer.X - currentPlayer.velocidade, currentPlayer.Y + 15, 30, 35), fase.arrayBlocosQuebraveis) && currentPlayer.X >= 54) {
+                                currentPlayer.X -= currentPlayer.velocidade;
+                            }
+                            if (currentPlayer.estado != ANDANDO_ESQUERDA && !currentPlayer.moveDown && !currentPlayer.moveUp) {
+                                currentPlayer.estado = ANDANDO_ESQUERDA;
+                            }
+                        }
+                        if (currentPlayer.moveDown) { //BAIXO
+                            if (intersBombas(new Rectangle(currentPlayer.X, currentPlayer.Y + currentPlayer.velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(currentPlayer.X, currentPlayer.Y + currentPlayer.velocidade + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(currentPlayer.X, currentPlayer.Y + currentPlayer.velocidade + 15, 30, 35), fase.arrayBlocosQuebraveis) && currentPlayer.Y <= 550) {
+                                currentPlayer.Y += currentPlayer.velocidade;
+                            }
+                            if (currentPlayer.estado != ANDANDO_FRENTE) {
+                                currentPlayer.estado = ANDANDO_FRENTE;
+                            }
+                        } else if (currentPlayer.moveUp) { //CIMA
+                            if (intersBombas(new Rectangle(currentPlayer.X, currentPlayer.Y - currentPlayer.velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(currentPlayer.X, currentPlayer.Y - currentPlayer.velocidade + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(currentPlayer.X, currentPlayer.Y - currentPlayer.velocidade + 15, 30, 35), fase.arrayBlocosQuebraveis) && currentPlayer.Y >= 30) {
+                                currentPlayer.Y -= currentPlayer.velocidade;
+                            }
+                            if (currentPlayer.estado != ANDANDO_COSTAS) {
+                                currentPlayer.estado = ANDANDO_COSTAS;
+                            }
+                        }
+                        if (!currentPlayer.moveDown && !currentPlayer.moveUp && !currentPlayer.moveLeft && !currentPlayer.moveRight) { //PARADO
+                            if (currentPlayer.estado != PARADO) {
+                                currentPlayer.estado = PARADO;
+                            }
+                        }
+                    }
                 }
-                if (currentPlayer.danoRecente >= 20) { // numero de "ticks" de imobilização
-                currentPlayer.boolStunned = false;
-                }
-                if (currentPlayer.danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
-                currentPlayer.boolDanoRecente = false;
-                currentPlayer.danoRecente = 0;
-                }
+                repaint();
             }
-    
-            /////////// Movimentação do player
-            if (!currentPlayer.boolStunned && currentPlayer.getVida()>0) { // Se não tomou dano recente (stun) e está vivo
-                if (currentPlayer.estado == PARADO) {
-                    currentPlayer.personagem = currentPlayer.imagensPlayer[PARADO];
-                } else if (currentPlayer.estado == ANDANDO_DIREITA) {
-                    currentPlayer.personagem = currentPlayer.imagensPlayer[ANDANDO_DIREITA];
-                } else if (currentPlayer.estado == ANDANDO_ESQUERDA) {
-                    currentPlayer.personagem = currentPlayer.imagensPlayer[ANDANDO_ESQUERDA];
-                } else if (currentPlayer.estado == ANDANDO_FRENTE) {
-                    currentPlayer.personagem = currentPlayer.imagensPlayer[ANDANDO_FRENTE];
-                } else if (currentPlayer.estado == ANDANDO_COSTAS) {
-                    currentPlayer.personagem = currentPlayer.imagensPlayer[ANDANDO_COSTAS];
-                } else {
-                    currentPlayer.personagem = currentPlayer.imagensPlayer[PARADO];
-                }
-                if (currentPlayer.moveRight) { //DIREITA
-                    if (intersBombas(new Rectangle(currentPlayer.X + currentPlayer.velocidade, currentPlayer.Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(currentPlayer.X + currentPlayer.velocidade, currentPlayer.Y + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(currentPlayer.X + currentPlayer.velocidade, currentPlayer.Y + 15, 30, 35), fase.arrayBlocosQuebraveis) && currentPlayer.X <= 856) {
-                        currentPlayer.X += currentPlayer.velocidade;
-                    }
-                    if (currentPlayer.estado != ANDANDO_DIREITA && !currentPlayer.moveDown && !currentPlayer.moveUp) {
-                        currentPlayer.estado = ANDANDO_DIREITA;
-                    }
-                } else if (currentPlayer.moveLeft) { //ESQUERDA
-                    if (intersBombas(new Rectangle(currentPlayer.X - currentPlayer.velocidade, currentPlayer.Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(currentPlayer.X - currentPlayer.velocidade, currentPlayer.Y + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(currentPlayer.X - currentPlayer.velocidade, currentPlayer.Y + 15, 30, 35), fase.arrayBlocosQuebraveis) && currentPlayer.X >= 54) {
-                        currentPlayer.X -= currentPlayer.velocidade;
-                    }
-                    if (currentPlayer.estado != ANDANDO_ESQUERDA && !currentPlayer.moveDown && !currentPlayer.moveUp) {
-                        currentPlayer.estado = ANDANDO_ESQUERDA;
-                    }
-                }
-                if (currentPlayer.moveDown) { //BAIXO
-                    if (intersBombas(new Rectangle(currentPlayer.X, currentPlayer.Y + currentPlayer.velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(currentPlayer.X, currentPlayer.Y + currentPlayer.velocidade + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(currentPlayer.X, currentPlayer.Y + currentPlayer.velocidade + 15, 30, 35), fase.arrayBlocosQuebraveis) && currentPlayer.Y <= 550) {
-                        currentPlayer.Y += currentPlayer.velocidade;
-                    }
-                    if (currentPlayer.estado != ANDANDO_FRENTE) {
-                        currentPlayer.estado = ANDANDO_FRENTE;
-                    }
-                } else if (currentPlayer.moveUp) { //CIMA
-                    if (intersBombas(new Rectangle(currentPlayer.X, currentPlayer.Y - currentPlayer.velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(currentPlayer.X, currentPlayer.Y - currentPlayer.velocidade + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(currentPlayer.X, currentPlayer.Y - currentPlayer.velocidade + 15, 30, 35), fase.arrayBlocosQuebraveis) && currentPlayer.Y >= 30) {
-                        currentPlayer.Y -= currentPlayer.velocidade;
-                    }
-                    if (currentPlayer.estado != ANDANDO_COSTAS) {
-                        currentPlayer.estado = ANDANDO_COSTAS;
-                    }
-                }
-                if (!currentPlayer.moveDown && !currentPlayer.moveUp && !currentPlayer.moveLeft && !currentPlayer.moveRight) { //PARADO
-                    if (currentPlayer.estado != PARADO) {
-                        currentPlayer.estado = PARADO;
-                    }
-                }
-            }
-            repaint();
         }catch (Exception eRef){
             System.out.println("Erro no refreshModels: "+eRef);
         }
@@ -182,13 +179,19 @@ class Cliente extends JFrame {
         final int BLOCOSHORIZONTAIS = 8, BLOCOSVERTICAIS = 5;
         Fase(int numeroFase){
             try {
-                if (numeroFase == MULTIPLAYER) {
-                    player2 = new Player(PERS_2);
+                if (numeroFase == MULTIPLAYER1) {
+                   for (int i = 1; i < 4; i++)
+                        arrayPlayers[i] = new Player(i+1);
+                    
+                    arrayPlayers[1].X = 60; arrayPlayers[1].Y = 540;
+                    arrayPlayers[2].X = 860; arrayPlayers[2].Y = 540;
+                    arrayPlayers[3].X = 860; arrayPlayers[3].Y = 40;   
+                    /* player2 = new Player(PERS_2);
                     player3 = new Player(PERS_3);
                     player4 = new Player(PERS_4);
                     player2.X = 60; player2.Y=540;
                     player3.X = 860; player3.Y=540;
-                    player4.X = 860; player4.Y=40;
+                    player4.X = 860; player4.Y=40; */
                     try {
                         imagensAmbiente[FUNDO] = new ImageIcon(getClass().getResource("Resources/FaseMultiplayer/chao1.png")).getImage();
                         imagensAmbiente[BLOCO] = new ImageIcon("Resources/FaseMultiplayer/blocoFixo.png").getImage();
@@ -206,11 +209,11 @@ class Cliente extends JFrame {
                         JOptionPane.showMessageDialog(this, "A imagem não pode ser carregada! (Multiplayer)\n" + e, "Erro", JOptionPane.ERROR_MESSAGE);
                         System.exit(1);
                     }
-                    funcAdcBlocosFixos(MULTIPLAYER);
-                    funcAdcBlocosQuebraveis(MULTIPLAYER);
+                    funcAdcBlocosFixos(MULTIPLAYER1);
+                    funcAdcBlocosQuebraveis(MULTIPLAYER1);
                     funcAdcItens(1, 2, 2, 1);
-                    funcAdcInimigos(MULTIPLAYER);
-                } else if (numeroFase == FASE1) {
+                    funcAdcInimigos(MULTIPLAYER1);
+                } else if (numeroFase == MULTIPLAYER2) {
                     try {
                         imagensAmbiente[FUNDO] = new ImageIcon("Resources/Fase1/chao1.png").getImage();
                         imagensAmbiente[BLOCO] = new ImageIcon("Resources/Fase1/blocoFixo.png").getImage();
@@ -228,11 +231,11 @@ class Cliente extends JFrame {
                         JOptionPane.showMessageDialog(this, "A imagem não pode ser carregada! (Fase 1)\n" + e, "Erro", JOptionPane.ERROR_MESSAGE);
                         System.exit(1);
                     }
-                    funcAdcBlocosFixos(FASE1);
-                    funcAdcBlocosQuebraveis(FASE1);
+                    funcAdcBlocosFixos(MULTIPLAYER2);
+                    funcAdcBlocosQuebraveis(MULTIPLAYER2);
                     funcAdcItens(1, 2, 2, 1);
-                    funcAdcInimigos(FASE1);
-                } else if (numeroFase == FASE2) {
+                    funcAdcInimigos(MULTIPLAYER2);
+                } else if (numeroFase == MULTIPLAYER3) {
                     try {
                         imagensAmbiente[FUNDO] = new ImageIcon("Resources/Fase2/chao1.png").getImage();
                         imagensAmbiente[BLOCO] = new ImageIcon("Resources/Fase2/blocoFixo.png").getImage();
@@ -250,12 +253,12 @@ class Cliente extends JFrame {
                         JOptionPane.showMessageDialog(this, "A imagem não pode ser carregada! (Fase 2)\n" + e, "Erro", JOptionPane.ERROR_MESSAGE);
                         System.exit(1);
                     }
-                    funcAdcBlocosFixos(FASE2);
-                    funcAdcBlocosQuebraveis(FASE2);
+                    funcAdcBlocosFixos(MULTIPLAYER3);
+                    funcAdcBlocosQuebraveis(MULTIPLAYER3);
                     funcAdcItens(1, 1, 1, 1);
-                    funcAdcInimigos(FASE2);
+                    funcAdcInimigos(MULTIPLAYER3);
                 }
-                else if (numeroFase == FASE3){
+                else if (numeroFase == MULTIPLAYER4){
                     try {
                         imagensAmbiente[FUNDO] = new ImageIcon("Resources/Fase3/chao1.png").getImage();
                         imagensAmbiente[BLOCO] = new ImageIcon("Resources/Fase3/blocoFixo.png").getImage();
@@ -273,10 +276,10 @@ class Cliente extends JFrame {
                         JOptionPane.showMessageDialog(this, "A imagem não pode ser carregada! (Fase 3)\n" + e, "Erro", JOptionPane.ERROR_MESSAGE);
                         System.exit(1);
                     }
-                    funcAdcBlocosFixos(FASE3);
-                    funcAdcBlocosQuebraveis(FASE3);
+                    funcAdcBlocosFixos(MULTIPLAYER4);
+                    funcAdcBlocosQuebraveis(MULTIPLAYER4);
                     funcAdcItens(1, 1, 1, 1);
-                    funcAdcInimigos(FASE3);
+                    funcAdcInimigos(MULTIPLAYER4);
                 }
             } catch (Exception e){
                 System.out.println("Erro Construtor Fases: " + e);
@@ -289,26 +292,26 @@ class Cliente extends JFrame {
             try {
                 blocosFixos = new Rectangle[40];
                 int i, j, index = 0;
-                if (fase == MULTIPLAYER) {
+                if (fase == MULTIPLAYER1) {
                     for (i = 100; i <= 800; i += 100) {
                         for (j = 100; j <= 500; j += 100) {
                             blocosFixos[index++] = new Rectangle(i, j, 50, 50);
                         }
                     }
-                } else if (fase == FASE1) {
+                } else if (fase == MULTIPLAYER2) {
                     for (i = 100; i <= 800; i += 100) {
                         for (j = 100; j <= 500; j += 100) {
                             blocosFixos[index++] = new Rectangle(i, j, 50, 50);
                         }
                     }
-                } else if (fase == FASE2) {
+                } else if (fase == MULTIPLAYER3) {
                     for (i = 100; i <= 800; i += 100) {
                         for (j = 100; j <= 500; j += 100) {
                             blocosFixos[index++] = new Rectangle(i, j, 50, 50);
                         }
                     }
                 }
-                else if (fase == FASE3) {
+                else if (fase == MULTIPLAYER4) {
                     for (i = 100; i <= 800; i += 100) {
                         for (j = 100; j <= 500; j += 100) {
                             blocosFixos[index++] = new Rectangle(i, j, 50, 50);
@@ -324,14 +327,14 @@ class Cliente extends JFrame {
             try {
                 arrayBlocosQuebraveis = new ArrayList<>(60);
                 int y;
-                if (fase == MULTIPLAYER) {
+                if (fase == MULTIPLAYER1) {
                     y = 50; //LINHA 1
                     arrayBlocosQuebraveis.add(new Rectangle(200, y, 50, 50));
                     arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
                     arrayBlocosQuebraveis.add(new Rectangle(600, y, 50, 50));
                     arrayBlocosQuebraveis.add(new Rectangle(700, y, 50, 50));
                     arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
-                } else if (fase == FASE1) {
+                } else if (fase == MULTIPLAYER2) {
                     y = 50; //LINHA 1
                     arrayBlocosQuebraveis.add(new Rectangle(200, y, 50, 50));
                     arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
@@ -397,7 +400,7 @@ class Cliente extends JFrame {
                     arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
                     arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
                     arrayBlocosQuebraveis.add(new Rectangle(800, y, 50, 50));
-                } else if (fase == FASE2) {
+                } else if (fase == MULTIPLAYER3) {
                     y = 50; //LINHA 1
                     arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
                     arrayBlocosQuebraveis.add(new Rectangle(600, y, 50, 50));
@@ -456,7 +459,7 @@ class Cliente extends JFrame {
                     arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
                     arrayBlocosQuebraveis.add(new Rectangle(500, y, 50, 50));
                 }
-                else if (fase == FASE3){
+                else if (fase == MULTIPLAYER4){
                     y = 50; //LINHA 1
                     arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
                     arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
@@ -571,16 +574,16 @@ class Cliente extends JFrame {
         void funcAdcInimigos(int fase){
             try {
                 arrayInimigos = new ArrayList<>(10);
-                if (fase == MULTIPLAYER) {
+                if (fase == MULTIPLAYER1) {
 
-                } else if (fase == FASE1) {
+                } else if (fase == MULTIPLAYER2) {
                     arrayInimigos.add(new Inimigo(400, 50, 2, HORIZONTAL, morcegoDireita, morcegoEsquerda));
                     arrayInimigos.add(new Inimigo(850, 300, 2, VERTICAL, morcegoCima, morcegoBaixo));
                     arrayInimigos.add(new Inimigo(250, 250, 2, HORIZONTAL, magoDireita, magoEsquerda));
                     arrayInimigos.add(new Inimigo(250, 50, 1, HORIZONTAL, cavaleiroDireita, cavaleiroEsquerda));
                     arrayInimigos.add(new Inimigo(750, 250, 2, VERTICAL, magoCima, magoBaixo));
                     arrayInimigos.add(new Inimigo(450, 250, 1, VERTICAL, cavaleiroCima, cavaleiroBaixo));
-                } else if (fase == FASE2) {
+                } else if (fase == MULTIPLAYER3) {
                     arrayInimigos.add(new Inimigo(550, 550, 2, HORIZONTAL, bauDireita, bauEsquerda));
                     arrayInimigos.add(new Inimigo(250, 250, 2, VERTICAL, bauCima, bauBaixo));
                     arrayInimigos.add(new Inimigo(200, 50, 2, HORIZONTAL, jenovaDireita, jenovaEsquerda));
@@ -588,7 +591,7 @@ class Cliente extends JFrame {
                     arrayInimigos.add(new Inimigo(150, 150, 2, HORIZONTAL, bruxaDireita, bruxaEsquerda));
                     arrayInimigos.add(new Inimigo(650, 150, 2, VERTICAL, bruxaCima, bruxaBaixo));
                 }
-                else if (fase == FASE3){
+                else if (fase == MULTIPLAYER4){
                     arrayInimigos.add(new Inimigo(300, 550, 2, HORIZONTAL, verdeDireita, verdeEsquerda));
                     arrayInimigos.add(new Inimigo(650, 250, 2, VERTICAL, verdeCima, verdeBaixo));
                     arrayInimigos.add(new Inimigo(200, 450, 2, HORIZONTAL, elfoDireita, elfoEsquerda));
@@ -682,11 +685,17 @@ class Cliente extends JFrame {
                                 break;
                         }
                         // Checa colisao da explosao com o player
-                        if(!player1.boolDanoRecente && arrayExplosao.get(i).hitBox.intersects(player1.getHitBox())) {
-                            player1.danificado();
-                        }
+                       // if(!currentPlayer.boolDanoRecente && arrayExplosao.get(i).hitBox.intersects(currentPlayer.getHitBox())) {
+                          //  currentPlayer.danificado();
+                       // }
                         if(multiplay){
-                            if(player2 != null && !player2.boolDanoRecente && arrayExplosao.get(i).hitBox.intersects(player2.getHitBox())) {
+                            for (i = 0; i < 4; i++){
+                                if (arrayPlayers[i] != null && !arrayPlayers[i].boolDanoRecente && arrayExplosao.get(i).hitBox.intersects(arrayPlayers[i].getHitBox())){
+                                    arrayPlayers[i].danificado();
+                                    System.out.println("dano player " + i);
+                                }
+                            }
+                           /* if(player2 != null && !player2.boolDanoRecente && arrayExplosao.get(i).hitBox.intersects(player2.getHitBox())) {
                                 player2.danificado();
                                 System.out.println("dano player2");
                             }
@@ -695,7 +704,7 @@ class Cliente extends JFrame {
                             }
                             if(player4 != null && !player4.boolDanoRecente && arrayExplosao.get(i).hitBox.intersects(player4.getHitBox())) {
                                 player4.danificado();
-                            }
+                            } */
                         }
                         /// Checa Colisao da explosao com o inimigo
                         for (int j=0; j<arrayInimigos.size();j++) {
@@ -704,7 +713,7 @@ class Cliente extends JFrame {
                                 //barraSuperior.scoreMonstro+=100;
                                 somaScore+=100;
                                 boolInimigoRemovido = true;
-                            }
+                            } 
                             if(arrayInimigos.isEmpty()) {
                                 break;
                             }
@@ -712,7 +721,7 @@ class Cliente extends JFrame {
                                 j=0;
                                 boolInimigoRemovido = false;
                             }
-                        }
+                        } 
                         arrayExplosao.get(i).holdDraw--;
                         if(arrayExplosao.get(i).holdDraw<0){ //Checa a colisao da explosão com os blocos quebraveis
                             for(int j=0; j<arrayBlocosQuebraveis.size();j++){
@@ -740,19 +749,23 @@ class Cliente extends JFrame {
                     }
                 }
                 /// Desenha o player1 (posicao inicial 40x40)
-                g.drawImage(player1.personagem, player1.getX(), player1.getY(), 30,50,this);
-
+               // g.drawImage(arrayPlayers[0].personagem, arrayPlayers[0].getX(), arrayPlayers[0].getY(), 30,50,this);
+                for (i = 0; i < 4; i++){
+                    if (arrayPlayers[i] != null){
+                        g.drawImage(arrayPlayers[i].personagem, arrayPlayers[i].getX(), arrayPlayers[i].getY(), 30, 50, this);
+                    }
+                }
                 /// Demais players
-                if(player2 != null)
-                    g.drawImage(player2.personagem, player2.getX(), player2.getY(), 30,50,this);
-                if(player3 != null)
-                    g.drawImage(player3.personagem, player3.getX(), player3.getY(), 30,50,this);
-                if(player4 != null)
-                    g.drawImage(player4.personagem, player4.getX(), player4.getY(), 30,50,this);
+               // if(arrayPlayers[1] != null)
+                   // g.drawImage(arrayPlayers[1].personagem, arrayPlayers[1].getX(), arrayPlayers[1].getY(), 30,50,this);
+                //if(player3 != null)
+                  //  g.drawImage(player3.personagem, player3.getX(), player3.getY(), 30,50,this);
+                //if(player4 != null)
+                 //   g.drawImage(player4.personagem, player4.getX(), player4.getY(), 30,50,this);
 
                 // Condições para o game over
                 if(single) { // Se for single player
-                    if (player1.getVida() == 0 || barraSuperior.valorTempo <= 0) { // Condicao para morrer
+                    if (currentPlayer.getVida() == 0 || barraSuperior.valorTempo <= 0) { // Condicao para morrer
                         boolGameOver = true;
                         g.drawImage(gameOver, 0, 0, this);
                     }
@@ -761,7 +774,12 @@ class Cliente extends JFrame {
                     if(barraSuperior.valorTempo <= 0){
                         System.out.println("EMPATE?");
                     }else {
-                        if (player1.getVida() <= 0) { // Condicao para morrer
+                        for (i = 0; i < 4; i++){
+                            if (arrayPlayers[i].getVida() <=0 ){
+                                System.out.println("Player " + i + "morto");
+                            }
+                        }
+                       /* if (player1.getVida() <= 0) { // Condicao para morrer
                             System.out.println("Player1 morto");
                         }
                         if (player2.getVida() <= 0) { // Condicao para morrer
@@ -772,11 +790,11 @@ class Cliente extends JFrame {
                         }
                         if (player4.getVida() <= 0) { // Condicao para morrer
                             System.out.println("Player4 morto");
-                        }
+                        } */
                     }
                 }
                 /// Passar de fase
-                if (!multiplay && arrayInimigos.size() == 0) {
+             /*   if (!multiplay && arrayInimigos.size() == 0) {
                     if (!ultimaFase) {
                         g.drawImage(fase.doorClosed, 450, 300, 50, 50, this);
                         if (player1.getHitBox().intersects(colisaoPorta)) {
@@ -797,7 +815,7 @@ class Cliente extends JFrame {
                             endGame = 0;
                         }
                     }
-                }
+                } */
 
                 Toolkit.getDefaultToolkit().sync();
             } catch (Exception e){
@@ -814,20 +832,20 @@ class Cliente extends JFrame {
     }
 
     public void checkVida(){
-        if (player1.getVida() == 3){
+        if (currentPlayer.getVida() == 3){
             primeiroCoracao.setIcon(coracaoCheio);
             segundoCoracao.setIcon(coracaoCheio);
             terceiroCoracao.setIcon(coracaoCheio);
-        } else if (player1.getVida() == 2) {
+        } else if (currentPlayer.getVida() == 2) {
             primeiroCoracao.setIcon(coracaoVazio);
             segundoCoracao.setIcon(coracaoCheio);
             terceiroCoracao.setIcon(coracaoCheio);
         }
-        else if (player1.getVida() == 1){
+        else if (currentPlayer.getVida() == 1){
             primeiroCoracao.setIcon(coracaoVazio);
             segundoCoracao.setIcon(coracaoVazio);
             terceiroCoracao.setIcon(coracaoCheio);
-        } else if (player1.getVida() == 0){
+        } else if (currentPlayer.getVida() == 0){
             primeiroCoracao.setIcon(coracaoVazio);
             segundoCoracao.setIcon(coracaoVazio);
             terceiroCoracao.setIcon(coracaoVazio);
@@ -1085,21 +1103,21 @@ class Cliente extends JFrame {
                 this.qtdeItemBota--;
                 somaScore-=100;
                 labelScore.setText(String.valueOf(somaScore));
-                labelQuantidadeItemBota.setText("x"+player1.qtdeItemBota);
+                labelQuantidadeItemBota.setText("x"+currentPlayer.qtdeItemBota);
             }
             if(this.bombaSize>1) {
                 this.bombaSize--;
                 this.qtdeItemExplosao--;
                 somaScore-=100;
                 labelScore.setText(String.valueOf(somaScore));
-                labelQuantidadeItemExplosao.setText("x"+player1.qtdeItemExplosao);
+                labelQuantidadeItemExplosao.setText("x"+currentPlayer.qtdeItemExplosao);
             }
             if(this.maxBombas > 2) {
                 this.maxBombas--;
                 this.qtdeItemBomba--;
                 somaScore-=100;
                 labelScore.setText(String.valueOf(somaScore));
-                labelQuantidadeItemBomba.setText("x"+player1.qtdeItemBomba);
+                labelQuantidadeItemBomba.setText("x"+currentPlayer.qtdeItemBomba);
             }
         }
 
@@ -1355,15 +1373,15 @@ class Cliente extends JFrame {
             labelImgItemExplosao.setBounds(820,2,36,36);
 
             //// Quantidade dos itens
-            labelQuantidadeItemBota = new JLabel("x"+player1.qtdeItemBota);
+            labelQuantidadeItemBota = new JLabel("x"+currentPlayer.qtdeItemBota);
             labelQuantidadeItemBota.setBounds(737,10,36,36);
             labelQuantidadeItemBota.setForeground(Color.white);
 
-            labelQuantidadeItemBomba = new JLabel("x"+player1.qtdeItemBomba);
+            labelQuantidadeItemBomba = new JLabel("x"+currentPlayer.qtdeItemBomba);
             labelQuantidadeItemBomba.setBounds(797,10,36,36);
             labelQuantidadeItemBomba.setForeground(Color.white);
 
-            labelQuantidadeItemExplosao = new JLabel("x"+player1.qtdeItemExplosao);
+            labelQuantidadeItemExplosao = new JLabel("x"+currentPlayer.qtdeItemExplosao);
             labelQuantidadeItemExplosao.setBounds(857,10,36,36);
             labelQuantidadeItemExplosao.setForeground(Color.white);
             //
@@ -1528,7 +1546,7 @@ class Cliente extends JFrame {
             }
             gameControler = NAV_FASE1;
             refreshModels.stop();
-            fase = new Fase(FASE1);
+            fase = new Fase(MULTIPLAYER2);
             add(fase, BorderLayout.SOUTH);
             barraSuperior.valorTempo = TEMPO_DA_FASE;
             labelTempoValue.setText("150");
@@ -1552,7 +1570,7 @@ class Cliente extends JFrame {
             gameControler = NAV_FASE2;
             refreshModels.stop();
             remove(fase);
-            fase = new Fase(FASE2);
+            fase = new Fase(MULTIPLAYER3);
             barraSuperior.tempo.stop();
             barraSuperior.valorTempo = TEMPO_DA_FASE;
             labelTempoValue.setText("150");
@@ -1577,7 +1595,7 @@ class Cliente extends JFrame {
             gameControler = NAV_FASE3;
             refreshModels.stop();
             remove(fase);
-            fase = new Fase(FASE3);
+            fase = new Fase(MULTIPLAYER4);
             ultimaFase = true;
             barraSuperior.tempo.stop();
             barraSuperior.valorTempo = TEMPO_DA_FASE;
@@ -1631,7 +1649,7 @@ class Cliente extends JFrame {
             barraSuperior = new layoutDeCima();
             add(barraSuperior, BorderLayout.NORTH);
             gameControler = NAV_MULTIPLAYER;
-            fase = new Fase(MULTIPLAYER);
+            fase = new Fase(MULTIPLAYER1);
             barraSuperior.valorTempo = TEMPO_DA_FASE;
             labelTempoValue.setText("150");
             barraSuperior.tempo = new Timer(1000, e -> {
@@ -1650,11 +1668,96 @@ class Cliente extends JFrame {
         }
     }
 
+    class Rede{
+        Socket socket = null;
+        DataInputStream is = null;
+        DataOutputStream os = null;
+        boolean temDados = true;
+        Cliente jogo;
+        public Rede(Cliente jogo, String IP, int porto){
+            try {
+                this.jogo = jogo;
+                socket = new Socket(IP, porto);
+                os = new DataOutputStream(socket.getOutputStream());
+                is = new DataInputStream(socket.getInputStream());
+            } catch (UnknownHostException e) {
+                JOptionPane.showMessageDialog(jogo,"Servidor não encontrado!\n   " + e, "Erro", JOptionPane.ERROR_MESSAGE);
+                System.exit(0);
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(jogo, "Não pode trocar dados com o servidor!\n   " + e, "Erro",
+                        JOptionPane.ERROR_MESSAGE);
+                System.exit(0);
+            }
+        }
+        public void enviaPosicao(String tipo, int x, int y) {
+            try {
+                os.writeUTF(tipo);
+                os.writeInt(x);
+                os.writeInt(y);
+            } catch (IOException e) {
+                temDados = false;
+            }
+        }
+        public void enviaBomba(String tipo, int x, int y){
+            try {
+                os.writeUTF(tipo);
+                os.writeInt(x);
+                os.writeInt(y);
+            } catch (IOException e) {
+                temDados = false;
+            }
+        }
+        public boolean continua() {
+
+            return temDados;
+        }
+
+        public String recebeMensagem (){
+            try {
+                return is.readUTF();
+              } catch (IOException e) {
+                temDados = false;
+                return "";
+              }
+        }
+        public void recebeVida(Player [] player) {
+            try {
+              for (int i = 0; i < 4; i++){
+                    player[i].vida = is.readInt();
+              }  
+            } catch (IOException e) {
+              temDados = false;
+            }
+          }
+
+        public void recebePosicoesPlayers(Player[] player) {
+            try {
+                for (int i = 0; i < 4; i++) {
+                    player[i].X = is.readInt();
+                    player[i].Y = is.readInt();
+                }
+            } catch (IOException e) {
+                temDados = false;
+            }
+        }
+
+        public void recebePosicoesBombas(){ // 
+
+        }
+        public void descarregaEnvio() {
+            try {
+                os.flush();
+            } catch (IOException e) {
+                temDados = false;
+            }
+        }
+
+    }
+
     Cliente(){
         super("Bomb Your Way Out");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         getContentPane().setBackground(Color.black);
-        // playMusic("musica2.wav");
         vida();
         gameControler = NAV_MENU;
         menu = new Menu();
@@ -1664,16 +1767,24 @@ class Cliente extends JFrame {
             public void keyPressed(KeyEvent e) {
                 if(gameControler == NAV_FASE1 || gameControler == NAV_FASE2 || gameControler == NAV_FASE3 || gameControler == NAV_MULTIPLAYER){
                     if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-                        player1.moveRight = true;
+                        currentPlayer.moveRight = true;
+                        rede.enviaPosicao("pos", currentPlayer.getX(), currentPlayer.getY());
+                        rede.descarregaEnvio();
                     } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-                        player1.moveLeft = true;
+                        currentPlayer.moveLeft = true;
+                        rede.enviaPosicao("pos", currentPlayer.getX(), currentPlayer.getY());
+                        rede.descarregaEnvio();
                     } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-                        player1.moveDown = true;
+                        currentPlayer.moveDown = true;
+                        rede.enviaPosicao("pos", currentPlayer.getX(), currentPlayer.getY());
+                        rede.descarregaEnvio();
                     } else if (e.getKeyCode() == KeyEvent.VK_UP) {
-                        player1.moveUp = true;
+                        currentPlayer.moveUp = true;
+                        rede.enviaPosicao("pos", currentPlayer.getX(), currentPlayer.getY());
+                        rede.descarregaEnvio();
                     } else if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-                        if(arrayBombas.size()<player1.maxBombas){
-                            arrayBombas.add(new Bomba(player1.getX(), player1.getY(), player1.bombaSize));
+                        if(arrayBombas.size()<currentPlayer.maxBombas){
+                            arrayBombas.add(new Bomba(currentPlayer.getX(), currentPlayer.getY(), currentPlayer.bombaSize));
                         }
                     }
                 }
@@ -1689,18 +1800,18 @@ class Cliente extends JFrame {
             public void keyReleased(KeyEvent kr){
                 if(gameControler == NAV_FASE1 || gameControler == NAV_FASE2 || gameControler == NAV_FASE3 || gameControler == NAV_MULTIPLAYER) {
                     if (kr.getKeyCode() == KeyEvent.VK_RIGHT) {
-                        player1.moveRight = false;
-                        System.out.println("pos: "+player1.getX()+","+ player1.getY()+".");
+                        currentPlayer.moveRight = false;
+                        System.out.println("pos: "+currentPlayer.getX()+","+ currentPlayer.getY()+".");
                     } else if (kr.getKeyCode() == KeyEvent.VK_LEFT) {
-                        player1.moveLeft = false;
-                        System.out.println("pos: "+player1.getX()+","+ player1.getY()+".");
+                        currentPlayer.moveLeft = false;
+                        System.out.println("pos: "+currentPlayer.getX()+","+ currentPlayer.getY()+".");
                     }
                     if (kr.getKeyCode() == KeyEvent.VK_UP) {
-                        player1.moveUp = false;
-                        System.out.println("pos: "+player1.getX()+","+ player1.getY()+".");
+                        currentPlayer.moveUp = false;
+                        System.out.println("pos: "+currentPlayer.getX()+","+ currentPlayer.getY()+".");
                     } else if (kr.getKeyCode() == KeyEvent.VK_DOWN) {
-                        player1.moveDown = false;
-                        System.out.println("pos: "+player1.getX()+","+ player1.getY()+".");
+                        currentPlayer.moveDown = false;
+                        System.out.println("pos: "+currentPlayer.getX()+","+ currentPlayer.getY()+".");
                     } else if (kr.getKeyCode() == KeyEvent.VK_ENTER) {
                         if(gameControler == NAV_FASE1) {
                             if(passarFase) {
