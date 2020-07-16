@@ -932,6 +932,7 @@ class Servidor extends Thread {
 
         public void run() {
             try {
+                System.out.println("\nPlayer run");
                 streamRecebeDoCliente = new DataInputStream(playerSocket.getInputStream());
                 streamEnviaAoCliente = new DataOutputStream(playerSocket.getOutputStream());
                 String codigoSocket;
@@ -1001,10 +1002,11 @@ class Servidor extends Thread {
             System.out.println("\nErro no serverSocket.\n");
         }
 
-        System.out.println("\nAguardando primeira conexão\n");
+        System.out.println("\nAguardando primeira conexao");
 
         try { // Tenta a conexão com o primeiro player
             arrayPlayerSockets[0] = serverSocket.accept();
+            System.out.println("\nPrimeira conexao estabelecida.");
         } catch (IOException e) {
             System.out.println("Erro ao aceitar a conexão." + e);
             System.exit(1);
@@ -1013,10 +1015,10 @@ class Servidor extends Thread {
         arrayPlayerThread[0] = new PlayerThread(arrayPlayerSockets[0]);
         arrayPlayerThread[0].start();
         do{ // Requere a quantidade de players
-            System.out.println("\nAguardando qtde players\n");
+            System.out.println("\nAguardando qtde players");
             try{
                 quantidadeDePlayers = arrayPlayerThread[0].streamRecebeDoCliente.readInt();
-                System.out.println("\nLeu quantidadeDePlayers = \n" + quantidadeDePlayers);
+                System.out.println("\nLeu quantidadeDePlayers = " + quantidadeDePlayers);
             }catch (Exception eRead){
                 System.out.println("\nErro no readInt (quantidade de players) "+eRead);
             }
