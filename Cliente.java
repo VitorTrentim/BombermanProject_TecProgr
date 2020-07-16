@@ -24,7 +24,7 @@ class Cliente extends JFrame {
     //// DADOS PLAYER
     final int PERS1 = 1, PERS2 = 2, PERS3 = 3, PERS4 = 4;
     Player arrayPlayers[] = {new Player(PERS1), new Player(PERS2), new Player(PERS3), new Player(PERS4)};
-    Player currentPlayer = new Player(PERS1);
+    //Player currentPlayer = new Player(PERS1);
     final int PARADO = 0, ANDANDO_DIREITA = 1,ANDANDO_ESQUERDA = 2, ANDANDO_FRENTE = 3, ANDANDO_COSTAS = 4, DANIFICADO = 5, LENGTH_IMAGENS_PLAYER = 6;
     String nome_do_Player, score_do_Player = null;
 
@@ -90,72 +90,72 @@ class Cliente extends JFrame {
                 rede.recebePosicoesPlayers(arrayPlayers);
                 String tipo = rede.recebeMensagem();
                 if (tipo == "Vida") {
-                    if (currentPlayer.boolDanoRecente) {
-                        if (currentPlayer.danoRecente++ == 0) {
+                    if (arrayPlayers[0].boolDanoRecente) {
+                        if (arrayPlayers[0].danoRecente++ == 0) {
                             checkVida();
                             scoreVida -= 100;
-                            currentPlayer.personagem = currentPlayer.imagensPlayer[DANIFICADO];
-                            currentPlayer.boolStunned = true;
+                            arrayPlayers[0].personagem = arrayPlayers[0].imagensPlayer[DANIFICADO];
+                            arrayPlayers[0].boolStunned = true;
                         }
-                        if (currentPlayer.danoRecente >= 20) { // numero de "ticks" de imobilização
-                            currentPlayer.boolStunned = false;
+                        if (arrayPlayers[0].danoRecente >= 20) { // numero de "ticks" de imobilização
+                            arrayPlayers[0].boolStunned = false;
                         }
-                        if (currentPlayer.danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
-                            currentPlayer.boolDanoRecente = false;
-                            currentPlayer.danoRecente = 0;
+                        if (arrayPlayers[0].danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
+                            arrayPlayers[0].boolDanoRecente = false;
+                            arrayPlayers[0].danoRecente = 0;
                         }
                     }
                  }
 
                 /////////// Movimentação do player
                 if (tipo == "pos") {
-                    if (!currentPlayer.boolStunned && currentPlayer.getVida() > 0) { // Se não tomou dano recente (stun) e está vivo
-                        if (currentPlayer.estado == PARADO) {
-                            currentPlayer.personagem = currentPlayer.imagensPlayer[PARADO];
-                        } else if (currentPlayer.estado == ANDANDO_DIREITA) {
-                            currentPlayer.personagem = currentPlayer.imagensPlayer[ANDANDO_DIREITA];
-                        } else if (currentPlayer.estado == ANDANDO_ESQUERDA) {
-                            currentPlayer.personagem = currentPlayer.imagensPlayer[ANDANDO_ESQUERDA];
-                        } else if (currentPlayer.estado == ANDANDO_FRENTE) {
-                            currentPlayer.personagem = currentPlayer.imagensPlayer[ANDANDO_FRENTE];
-                        } else if (currentPlayer.estado == ANDANDO_COSTAS) {
-                            currentPlayer.personagem = currentPlayer.imagensPlayer[ANDANDO_COSTAS];
+                    if (!arrayPlayers[0].boolStunned && arrayPlayers[0].getVida() > 0) { // Se não tomou dano recente (stun) e está vivo
+                        if (arrayPlayers[0].estado == PARADO) {
+                            arrayPlayers[0].personagem = arrayPlayers[0].imagensPlayer[PARADO];
+                        } else if (arrayPlayers[0].estado == ANDANDO_DIREITA) {
+                            arrayPlayers[0].personagem = arrayPlayers[0].imagensPlayer[ANDANDO_DIREITA];
+                        } else if (arrayPlayers[0].estado == ANDANDO_ESQUERDA) {
+                            arrayPlayers[0].personagem = arrayPlayers[0].imagensPlayer[ANDANDO_ESQUERDA];
+                        } else if (arrayPlayers[0].estado == ANDANDO_FRENTE) {
+                            arrayPlayers[0].personagem = arrayPlayers[0].imagensPlayer[ANDANDO_FRENTE];
+                        } else if (arrayPlayers[0].estado == ANDANDO_COSTAS) {
+                            arrayPlayers[0].personagem = arrayPlayers[0].imagensPlayer[ANDANDO_COSTAS];
                         } else {
-                            currentPlayer.personagem = currentPlayer.imagensPlayer[PARADO];
+                            arrayPlayers[0].personagem = arrayPlayers[0].imagensPlayer[PARADO];
                         }
-                        if (currentPlayer.moveRight) { //DIREITA
-                            if (intersBombas(new Rectangle(currentPlayer.X + currentPlayer.velocidade, currentPlayer.Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(currentPlayer.X + currentPlayer.velocidade, currentPlayer.Y + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(currentPlayer.X + currentPlayer.velocidade, currentPlayer.Y + 15, 30, 35), fase.arrayBlocosQuebraveis) && currentPlayer.X <= 856) {
-                                currentPlayer.X += currentPlayer.velocidade;
+                        if (arrayPlayers[0].moveRight) { //DIREITA
+                            if (intersBombas(new Rectangle(arrayPlayers[0].X + arrayPlayers[0].velocidade, arrayPlayers[0].Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(arrayPlayers[0].X + arrayPlayers[0].velocidade, arrayPlayers[0].Y + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(arrayPlayers[0].X + arrayPlayers[0].velocidade, arrayPlayers[0].Y + 15, 30, 35), fase.arrayBlocosQuebraveis) && arrayPlayers[0].X <= 856) {
+                                arrayPlayers[0].X += arrayPlayers[0].velocidade;
                             }
-                            if (currentPlayer.estado != ANDANDO_DIREITA && !currentPlayer.moveDown && !currentPlayer.moveUp) {
-                                currentPlayer.estado = ANDANDO_DIREITA;
+                            if (arrayPlayers[0].estado != ANDANDO_DIREITA && !arrayPlayers[0].moveDown && !arrayPlayers[0].moveUp) {
+                                arrayPlayers[0].estado = ANDANDO_DIREITA;
                             }
-                        } else if (currentPlayer.moveLeft) { //ESQUERDA
-                            if (intersBombas(new Rectangle(currentPlayer.X - currentPlayer.velocidade, currentPlayer.Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(currentPlayer.X - currentPlayer.velocidade, currentPlayer.Y + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(currentPlayer.X - currentPlayer.velocidade, currentPlayer.Y + 15, 30, 35), fase.arrayBlocosQuebraveis) && currentPlayer.X >= 54) {
-                                currentPlayer.X -= currentPlayer.velocidade;
+                        } else if (arrayPlayers[0].moveLeft) { //ESQUERDA
+                            if (intersBombas(new Rectangle(arrayPlayers[0].X - arrayPlayers[0].velocidade, arrayPlayers[0].Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(arrayPlayers[0].X - arrayPlayers[0].velocidade, arrayPlayers[0].Y + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(arrayPlayers[0].X - arrayPlayers[0].velocidade, arrayPlayers[0].Y + 15, 30, 35), fase.arrayBlocosQuebraveis) && arrayPlayers[0].X >= 54) {
+                                arrayPlayers[0].X -= arrayPlayers[0].velocidade;
                             }
-                            if (currentPlayer.estado != ANDANDO_ESQUERDA && !currentPlayer.moveDown && !currentPlayer.moveUp) {
-                                currentPlayer.estado = ANDANDO_ESQUERDA;
-                            }
-                        }
-                        if (currentPlayer.moveDown) { //BAIXO
-                            if (intersBombas(new Rectangle(currentPlayer.X, currentPlayer.Y + currentPlayer.velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(currentPlayer.X, currentPlayer.Y + currentPlayer.velocidade + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(currentPlayer.X, currentPlayer.Y + currentPlayer.velocidade + 15, 30, 35), fase.arrayBlocosQuebraveis) && currentPlayer.Y <= 550) {
-                                currentPlayer.Y += currentPlayer.velocidade;
-                            }
-                            if (currentPlayer.estado != ANDANDO_FRENTE) {
-                                currentPlayer.estado = ANDANDO_FRENTE;
-                            }
-                        } else if (currentPlayer.moveUp) { //CIMA
-                            if (intersBombas(new Rectangle(currentPlayer.X, currentPlayer.Y - currentPlayer.velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(currentPlayer.X, currentPlayer.Y - currentPlayer.velocidade + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(currentPlayer.X, currentPlayer.Y - currentPlayer.velocidade + 15, 30, 35), fase.arrayBlocosQuebraveis) && currentPlayer.Y >= 30) {
-                                currentPlayer.Y -= currentPlayer.velocidade;
-                            }
-                            if (currentPlayer.estado != ANDANDO_COSTAS) {
-                                currentPlayer.estado = ANDANDO_COSTAS;
+                            if (arrayPlayers[0].estado != ANDANDO_ESQUERDA && !arrayPlayers[0].moveDown && !arrayPlayers[0].moveUp) {
+                                arrayPlayers[0].estado = ANDANDO_ESQUERDA;
                             }
                         }
-                        if (!currentPlayer.moveDown && !currentPlayer.moveUp && !currentPlayer.moveLeft && !currentPlayer.moveRight) { //PARADO
-                            if (currentPlayer.estado != PARADO) {
-                                currentPlayer.estado = PARADO;
+                        if (arrayPlayers[0].moveDown) { //BAIXO
+                            if (intersBombas(new Rectangle(arrayPlayers[0].X, arrayPlayers[0].Y + arrayPlayers[0].velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(arrayPlayers[0].X, arrayPlayers[0].Y + arrayPlayers[0].velocidade + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(arrayPlayers[0].X, arrayPlayers[0].Y + arrayPlayers[0].velocidade + 15, 30, 35), fase.arrayBlocosQuebraveis) && arrayPlayers[0].Y <= 550) {
+                                arrayPlayers[0].Y += arrayPlayers[0].velocidade;
+                            }
+                            if (arrayPlayers[0].estado != ANDANDO_FRENTE) {
+                                arrayPlayers[0].estado = ANDANDO_FRENTE;
+                            }
+                        } else if (arrayPlayers[0].moveUp) { //CIMA
+                            if (intersBombas(new Rectangle(arrayPlayers[0].X, arrayPlayers[0].Y - arrayPlayers[0].velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(arrayPlayers[0].X, arrayPlayers[0].Y - arrayPlayers[0].velocidade + 15, 30, 35), fase.blocosFixos) && intersBlocosQuebraveis(new Rectangle(arrayPlayers[0].X, arrayPlayers[0].Y - arrayPlayers[0].velocidade + 15, 30, 35), fase.arrayBlocosQuebraveis) && arrayPlayers[0].Y >= 30) {
+                                arrayPlayers[0].Y -= arrayPlayers[0].velocidade;
+                            }
+                            if (arrayPlayers[0].estado != ANDANDO_COSTAS) {
+                                arrayPlayers[0].estado = ANDANDO_COSTAS;
+                            }
+                        }
+                        if (!arrayPlayers[0].moveDown && !arrayPlayers[0].moveUp && !arrayPlayers[0].moveLeft && !arrayPlayers[0].moveRight) { //PARADO
+                            if (arrayPlayers[0].estado != PARADO) {
+                                arrayPlayers[0].estado = PARADO;
                             }
                         }
                     }
@@ -180,18 +180,10 @@ class Cliente extends JFrame {
         Fase(int numeroFase){
             try {
                 if (numeroFase == MULTIPLAYER1) {
-                   for (int i = 1; i < 4; i++)
-                        arrayPlayers[i] = new Player(i+1);
-                    
+                    arrayPlayers[0].X = 60; arrayPlayers[0].Y = 40;
                     arrayPlayers[1].X = 60; arrayPlayers[1].Y = 540;
                     arrayPlayers[2].X = 860; arrayPlayers[2].Y = 540;
                     arrayPlayers[3].X = 860; arrayPlayers[3].Y = 40;   
-                    /* player2 = new Player(PERS_2);
-                    player3 = new Player(PERS_3);
-                    player4 = new Player(PERS_4);
-                    player2.X = 60; player2.Y=540;
-                    player3.X = 860; player3.Y=540;
-                    player4.X = 860; player4.Y=40; */
                     try {
                         imagensAmbiente[FUNDO] = new ImageIcon(getClass().getResource("Resources/FaseMultiplayer/chao1.png")).getImage();
                         imagensAmbiente[BLOCO] = new ImageIcon("Resources/FaseMultiplayer/blocoFixo.png").getImage();
@@ -620,37 +612,49 @@ class Cliente extends JFrame {
             try{
                 /// Desenha o fundo
                 g.drawImage(imagensAmbiente[FUNDO], 0, 0, getSize().width, getSize().height, this);
+                System.out.println("1");
                 /// Desenha as bordas superior e inferior
                 for(i=50; i <= imagensAmbiente[FUNDO].getWidth(this)-100; i+=50){
                     g.drawImage(imagensAmbiente[MARGEM_C], i, 0,50,50, this);
+                    System.out.println("2");
                     g.drawImage(imagensAmbiente[MARGEM_B], i, imagensAmbiente[FUNDO].getHeight(this)-50,50,50, this);
+                    System.out.println("3");
                 }
                 /// Desenha as bordas da esquerda e da direita
                 for(i=50; i <= imagensAmbiente[FUNDO].getHeight(this)-100; i+=50){
                     g.drawImage(imagensAmbiente[MARGEM_E], 0, i,50,50, this);
+                    System.out.println("4");
                     g.drawImage(imagensAmbiente[MARGEM_D], imagensAmbiente[FUNDO].getWidth(this)-50, i,50,50, this);
+                    System.out.println("5");
                 }
                 /// Desenha as quinas
                 g.drawImage(imagensAmbiente[MARGEM_CE], 0, 0,50,50, this);
+                System.out.println("6");
                 g.drawImage(imagensAmbiente[MARGEM_CD], 900, 0,50,50, this);
+                System.out.println("7");
                 g.drawImage(imagensAmbiente[MARGEM_BE], 0, 600,50,50, this);
+                System.out.println("8");
                 g.drawImage(imagensAmbiente[MARGEM_BD], 900, 600,50,50, this);
+                System.out.println("9");
 
                 /// Coloca os blocos fixos dentro do campo de jogo
                 for(int y=100; y<=BLOCOSVERTICAIS*100; y+=100){
                     for(i=100; i<=BLOCOSHORIZONTAIS*100; i+=100){
                         g.drawImage(imagensAmbiente[BLOCO], i, y, this);
+                        System.out.println("10");
                     }
                 }
                 /// Desenha os itens
                 for (i = 0; i < arrayItens.size(); i++) {
                     g.drawImage(arrayItens.get(i).imagensItemAnimacao[indexItems].getImage(), arrayItens.get(i).posX, arrayItens.get(i).posY, 40, 40, this);
+                    System.out.println("11");
                     if (arrayItens.isEmpty())
                         break;
                 }
                 /// Coloca os blocos quebráveis dentro do campo de jogo
                 for(i=0 ; i<arrayBlocosQuebraveis.size(); i++) {
                     g.drawImage(imagensAmbiente[BLOCOQUEBRAVEL], (int)arrayBlocosQuebraveis.get(i).getX(), (int)arrayBlocosQuebraveis.get(i).getY(), this);
+                    System.out.println("12");
                     if(arrayBlocosQuebraveis.isEmpty())
                         break;
                 }
@@ -669,10 +673,12 @@ class Cliente extends JFrame {
                 /// DESENHA AS EXPLOSOES
                 if(arrayExplosao.size()>0){
                     for(i = 0; i < arrayExplosao.size(); i++){
-                        if (arrayExplosao.get(i).tipoDeAnimacao==0)
+                        if (arrayExplosao.get(i).tipoDeAnimacao==0){
                             g.drawImage(explosao, arrayExplosao.get(i).x, arrayExplosao.get(i).y, this);
-                        else
+                        }
+                        else{
                             g.drawImage(explosao2, arrayExplosao.get(i).x, arrayExplosao.get(i).y, this);
+                        }
 
                         //Checa colisao explosao com outra bomba
                         for(int j=0; j < arrayBombas.size();j++){
@@ -707,7 +713,7 @@ class Cliente extends JFrame {
                             } */
                         }
                         /// Checa Colisao da explosao com o inimigo
-                        for (int j=0; j<arrayInimigos.size();j++) {
+                    /*    for (int j=0; j<arrayInimigos.size();j++) {
                             if (arrayExplosao.get(i).hitBox.intersects(arrayInimigos.get(j).getBounds()) && arrayExplosao.get(i).holdDraw > 0){ // Checa colisao da bomba com o inimigo
                                 arrayInimigos.remove(j); // Remove o objeto inimigo do arrayInimigos (não será mais desenhado)
                                 //barraSuperior.scoreMonstro+=100;
@@ -721,7 +727,7 @@ class Cliente extends JFrame {
                                 j=0;
                                 boolInimigoRemovido = false;
                             }
-                        } 
+                        }  */
                         arrayExplosao.get(i).holdDraw--;
                         if(arrayExplosao.get(i).holdDraw<0){ //Checa a colisao da explosão com os blocos quebraveis
                             for(int j=0; j<arrayBlocosQuebraveis.size();j++){
@@ -739,7 +745,7 @@ class Cliente extends JFrame {
 
                 /// Desenha o Inimigo
 
-                if (fase.arrayInimigos.size()>0) {
+               /* if (fase.arrayInimigos.size()>0) {
                     for (i = 0; i < arrayInimigos.size(); i++) {
                         if(arrayInimigos.get(i)!=null)
                             g.drawImage(arrayInimigos.get(i).getImage(), arrayInimigos.get(i).x+8, arrayInimigos.get(i).y-5, 31, 47, this);
@@ -747,14 +753,19 @@ class Cliente extends JFrame {
                             break;
                         }
                     }
-                }
+                } */
                 /// Desenha o player1 (posicao inicial 40x40)
                // g.drawImage(arrayPlayers[0].personagem, arrayPlayers[0].getX(), arrayPlayers[0].getY(), 30,50,this);
-                for (i = 0; i < 4; i++){
+                
+               
+               for (i = 0; i < 4; i++){
                     if (arrayPlayers[i] != null){
                         g.drawImage(arrayPlayers[i].personagem, arrayPlayers[i].getX(), arrayPlayers[i].getY(), 30, 50, this);
+                        System.out.println("16");
                     }
                 }
+
+                
                 /// Demais players
                // if(arrayPlayers[1] != null)
                    // g.drawImage(arrayPlayers[1].personagem, arrayPlayers[1].getX(), arrayPlayers[1].getY(), 30,50,this);
@@ -765,19 +776,20 @@ class Cliente extends JFrame {
 
                 // Condições para o game over
                 if(single) { // Se for single player
-                    if (currentPlayer.getVida() == 0 || barraSuperior.valorTempo <= 0) { // Condicao para morrer
-                        boolGameOver = true;
-                        g.drawImage(gameOver, 0, 0, this);
+                   // if (currentPlayer.getVida() == 0 || barraSuperior.valorTempo <= 0) { // Condicao para morrer
+                       // boolGameOver = true;
+                        //g.drawImage(gameOver, 0, 0, this);
                     }
-                }
+               // }
                 else { // Se for multiplayer
                     if(barraSuperior.valorTempo <= 0){
                         System.out.println("EMPATE?");
                     }else {
                         for (i = 0; i < 4; i++){
-                            if (arrayPlayers[i].getVida() <=0 ){
-                                System.out.println("Player " + i + "morto");
-                            }
+                            if (arrayPlayers[i]!=null)
+                                if (arrayPlayers[i].getVida() <=0 ){
+                                    System.out.println("Player " + i + "morto");
+                                }
                         }
                        /* if (player1.getVida() <= 0) { // Condicao para morrer
                             System.out.println("Player1 morto");
@@ -819,7 +831,7 @@ class Cliente extends JFrame {
 
                 Toolkit.getDefaultToolkit().sync();
             } catch (Exception e){
-                System.out.println("Erro draw: "+e);
+                System.out.println("Erro draw: "+ e);
             }
         }
 
@@ -832,20 +844,20 @@ class Cliente extends JFrame {
     }
 
     public void checkVida(){
-        if (currentPlayer.getVida() == 3){
+        if (arrayPlayers[0].getVida() == 3){
             primeiroCoracao.setIcon(coracaoCheio);
             segundoCoracao.setIcon(coracaoCheio);
             terceiroCoracao.setIcon(coracaoCheio);
-        } else if (currentPlayer.getVida() == 2) {
+        } else if (arrayPlayers[0].getVida() == 2) {
             primeiroCoracao.setIcon(coracaoVazio);
             segundoCoracao.setIcon(coracaoCheio);
             terceiroCoracao.setIcon(coracaoCheio);
         }
-        else if (currentPlayer.getVida() == 1){
+        else if (arrayPlayers[0].getVida() == 1){
             primeiroCoracao.setIcon(coracaoVazio);
             segundoCoracao.setIcon(coracaoVazio);
             terceiroCoracao.setIcon(coracaoCheio);
-        } else if (currentPlayer.getVida() == 0){
+        } else if (arrayPlayers[0].getVida() == 0){
             primeiroCoracao.setIcon(coracaoVazio);
             segundoCoracao.setIcon(coracaoVazio);
             terceiroCoracao.setIcon(coracaoVazio);
@@ -1103,21 +1115,21 @@ class Cliente extends JFrame {
                 this.qtdeItemBota--;
                 somaScore-=100;
                 labelScore.setText(String.valueOf(somaScore));
-                labelQuantidadeItemBota.setText("x"+currentPlayer.qtdeItemBota);
+                labelQuantidadeItemBota.setText("x"+arrayPlayers[0].qtdeItemBota);
             }
             if(this.bombaSize>1) {
                 this.bombaSize--;
                 this.qtdeItemExplosao--;
                 somaScore-=100;
                 labelScore.setText(String.valueOf(somaScore));
-                labelQuantidadeItemExplosao.setText("x"+currentPlayer.qtdeItemExplosao);
+                labelQuantidadeItemExplosao.setText("x"+arrayPlayers[0].qtdeItemExplosao);
             }
             if(this.maxBombas > 2) {
                 this.maxBombas--;
                 this.qtdeItemBomba--;
                 somaScore-=100;
                 labelScore.setText(String.valueOf(somaScore));
-                labelQuantidadeItemBomba.setText("x"+currentPlayer.qtdeItemBomba);
+                labelQuantidadeItemBomba.setText("x"+arrayPlayers[0].qtdeItemBomba);
             }
         }
 
@@ -1373,15 +1385,15 @@ class Cliente extends JFrame {
             labelImgItemExplosao.setBounds(820,2,36,36);
 
             //// Quantidade dos itens
-            labelQuantidadeItemBota = new JLabel("x"+currentPlayer.qtdeItemBota);
+            labelQuantidadeItemBota = new JLabel("x"+arrayPlayers[0].qtdeItemBota);
             labelQuantidadeItemBota.setBounds(737,10,36,36);
             labelQuantidadeItemBota.setForeground(Color.white);
 
-            labelQuantidadeItemBomba = new JLabel("x"+currentPlayer.qtdeItemBomba);
+            labelQuantidadeItemBomba = new JLabel("x"+arrayPlayers[0].qtdeItemBomba);
             labelQuantidadeItemBomba.setBounds(797,10,36,36);
             labelQuantidadeItemBomba.setForeground(Color.white);
 
-            labelQuantidadeItemExplosao = new JLabel("x"+currentPlayer.qtdeItemExplosao);
+            labelQuantidadeItemExplosao = new JLabel("x"+arrayPlayers[0].qtdeItemExplosao);
             labelQuantidadeItemExplosao.setBounds(857,10,36,36);
             labelQuantidadeItemExplosao.setForeground(Color.white);
             //
@@ -1767,24 +1779,24 @@ class Cliente extends JFrame {
             public void keyPressed(KeyEvent e) {
                 if(gameControler == NAV_FASE1 || gameControler == NAV_FASE2 || gameControler == NAV_FASE3 || gameControler == NAV_MULTIPLAYER){
                     if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-                        currentPlayer.moveRight = true;
-                        rede.enviaPosicao("pos", currentPlayer.getX(), currentPlayer.getY());
+                        arrayPlayers[0].moveRight = true;
+                        rede.enviaPosicao("pos", arrayPlayers[0].getX(), arrayPlayers[0].getY());
                         rede.descarregaEnvio();
                     } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-                        currentPlayer.moveLeft = true;
-                        rede.enviaPosicao("pos", currentPlayer.getX(), currentPlayer.getY());
+                        arrayPlayers[0].moveLeft = true;
+                        rede.enviaPosicao("pos", arrayPlayers[0].getX(), arrayPlayers[0].getY());
                         rede.descarregaEnvio();
                     } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-                        currentPlayer.moveDown = true;
-                        rede.enviaPosicao("pos", currentPlayer.getX(), currentPlayer.getY());
+                        arrayPlayers[0].moveDown = true;
+                        rede.enviaPosicao("pos", arrayPlayers[0].getX(), arrayPlayers[0].getY());
                         rede.descarregaEnvio();
                     } else if (e.getKeyCode() == KeyEvent.VK_UP) {
-                        currentPlayer.moveUp = true;
-                        rede.enviaPosicao("pos", currentPlayer.getX(), currentPlayer.getY());
+                        arrayPlayers[0].moveUp = true;
+                        rede.enviaPosicao("pos", arrayPlayers[0].getX(), arrayPlayers[0].getY());
                         rede.descarregaEnvio();
                     } else if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-                        if(arrayBombas.size()<currentPlayer.maxBombas){
-                            arrayBombas.add(new Bomba(currentPlayer.getX(), currentPlayer.getY(), currentPlayer.bombaSize));
+                        if(arrayBombas.size()<arrayPlayers[0].maxBombas){
+                            arrayBombas.add(new Bomba(arrayPlayers[0].getX(), arrayPlayers[0].getY(), arrayPlayers[0].bombaSize));
                         }
                     }
                 }
@@ -1800,18 +1812,18 @@ class Cliente extends JFrame {
             public void keyReleased(KeyEvent kr){
                 if(gameControler == NAV_FASE1 || gameControler == NAV_FASE2 || gameControler == NAV_FASE3 || gameControler == NAV_MULTIPLAYER) {
                     if (kr.getKeyCode() == KeyEvent.VK_RIGHT) {
-                        currentPlayer.moveRight = false;
-                        System.out.println("pos: "+currentPlayer.getX()+","+ currentPlayer.getY()+".");
+                        arrayPlayers[0].moveRight = false;
+                        System.out.println("pos: "+arrayPlayers[0].getX()+","+ arrayPlayers[0].getY()+".");
                     } else if (kr.getKeyCode() == KeyEvent.VK_LEFT) {
-                        currentPlayer.moveLeft = false;
-                        System.out.println("pos: "+currentPlayer.getX()+","+ currentPlayer.getY()+".");
+                        arrayPlayers[0].moveLeft = false;
+                        System.out.println("pos: "+arrayPlayers[0].getX()+","+ arrayPlayers[0].getY()+".");
                     }
                     if (kr.getKeyCode() == KeyEvent.VK_UP) {
-                        currentPlayer.moveUp = false;
-                        System.out.println("pos: "+currentPlayer.getX()+","+ currentPlayer.getY()+".");
+                        arrayPlayers[0].moveUp = false;
+                        System.out.println("pos: "+arrayPlayers[0].getX()+","+ arrayPlayers[0].getY()+".");
                     } else if (kr.getKeyCode() == KeyEvent.VK_DOWN) {
-                        currentPlayer.moveDown = false;
-                        System.out.println("pos: "+currentPlayer.getX()+","+ currentPlayer.getY()+".");
+                        arrayPlayers[0].moveDown = false;
+                        System.out.println("pos: "+arrayPlayers[0].getX()+","+ arrayPlayers[0].getY()+".");
                     } else if (kr.getKeyCode() == KeyEvent.VK_ENTER) {
                         if(gameControler == NAV_FASE1) {
                             if(passarFase) {
