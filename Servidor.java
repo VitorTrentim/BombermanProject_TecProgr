@@ -9,6 +9,9 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.FloatControl;
 import javax.swing.*;
 import javax.swing.border.Border;
+
+//import jdk.internal.org.jline.utils.InputStreamReader;
+
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -24,11 +27,10 @@ import java.io.DataOutputStream;
 
 class Servidor extends Thread {
     //// DADOS DE CONEXÃO
+    int PORTO = 12345;
     ServerSocket serverSocket = null;
-    DataOutputStream serverOutputStream[];
     boolean boolGameRunning = false;
     Socket arrayPlayerSockets[] = new Socket[4];
-
 
     //// DADOS PLAYER
     final int PERS1 = 1, PERS2 = 2, PERS3 = 3, PERS4 = 4;
@@ -920,10 +922,12 @@ class Servidor extends Thread {
         Socket playerSocket;
         DataOutputStream streamEnviaAoCliente;
         DataInputStream streamRecebeDoCliente;
-
+        BufferedReader reader;
         PlayerThread(Socket socketRecebido) {
             try {
                 this.playerSocket = socketRecebido;
+                streamRecebeDoCliente = new DataInputStream(socketRecebido.getInputStream());
+                streamEnviaAoCliente = new DataOutputStream(socketRecebido.getOutputStream());
 
             } catch (Exception erroPlayer) {
                 System.out.println("Erro (Player): " + erroPlayer);
@@ -933,24 +937,15 @@ class Servidor extends Thread {
         public void run() {
             try {
                 System.out.println("\nPlayer run");
-                streamRecebeDoCliente = new DataInputStream(playerSocket.getInputStream());
-                streamEnviaAoCliente = new DataOutputStream(playerSocket.getOutputStream());
+                reader = new BufferedReader(new InputStreamReader(streamRecebeDoCliente));  
                 String codigoSocket;
 
-                do {
-                    codigoSocket = streamRecebeDoCliente.readUTF();
-                    switch (codigoSocket) {
-                        case "pos":
-                            break;
-                        case "bomba":
-                            break;
+                while( (codigoSocket = reader.readLine()) != null){
+                    if("bomba".equalsIgnoreCase(codigoSocket)){
+                        System.out.println("\nBomba!");
                     }
-                    try {
-                        streamEnviaAoCliente.flush();
-                    }
-                    catch (IOException e) {
-                    }
-                } while (boolGameRunning);
+
+                }
 
                 streamEnviaAoCliente.close();
                 streamRecebeDoCliente.close();
@@ -996,48 +991,49 @@ class Servidor extends Thread {
 
     Servidor() {
         try{
-            serverSocket = new ServerSocket(80);
+            serverSocket = new ServerSocket(PORTO);
+            
+            System.out.println("\nAguardando primeira conexao");
+            arrayPlayerSockets[0] = serverSocket.accept();
+            System.out.println("\nPrimeira conexao estabelecida. Enviando o clientSocket ao PlayerThread[0]");
+            arrayPlayerThread[0] = new PlayerThread(arrayPlayerSockets[0]);
+            System.out.println("\nIniciando a thread PlayerThread[0]");
+            arrayPlayerThread[0].start();
+            //// primeira mensagem ao cliente 
+            arrayPlayerThread[0].streamEnviaAoCliente.write("\nConexao com o servidor estabelecida.".getBytes());
+            
         }
         catch(Exception e){
-            System.out.println("\nErro no serverSocket.\n");
-        }
-
-        System.out.println("\nAguardando primeira conexao");
-
-        try { // Tenta a conexão com o primeiro player
-            arrayPlayerSockets[0] = serverSocket.accept();
-            System.out.println("\nPrimeira conexao estabelecida.");
-        } catch (IOException e) {
-            System.out.println("Erro ao aceitar a conexão." + e);
+            System.out.println("\nErro na conexao. - "+e);
             System.exit(1);
         }
 
-        arrayPlayerThread[0] = new PlayerThread(arrayPlayerSockets[0]);
-        arrayPlayerThread[0].start();
-        do{ // Requere a quantidade de players
+        
+        try{
             System.out.println("\nAguardando qtde players");
-            try{
-                quantidadeDePlayers = arrayPlayerThread[0].streamRecebeDoCliente.readInt();
-                System.out.println("\nLeu quantidadeDePlayers = " + quantidadeDePlayers);
-            }catch (Exception eRead){
-                System.out.println("\nErro no readInt (quantidade de players) "+eRead);
+            while((quantidadeDePlayers = Integer.parseInt(arrayPlayerThread[0].reader.readLine())) == 0){
+                quantidadeDePlayers = Integer.parseInt(arrayPlayerThread[0].reader.readLine());
             }
-
-        }while(quantidadeDePlayers == 0);
+            System.out.println("\nLeu quantidadeDePlayers = " + quantidadeDePlayers);   
+        }catch (Exception eRead){
+            System.out.println("\nErro no readInt (quantidade de players) - "+eRead);
+        }
 
         for (int i = 1; i < quantidadeDePlayers; i++) { // Conecta os players restantes
+            System.out.println("\nConectando o player["+i+"]");
             arrayPlayerSockets[i] = null;
             try {
                 arrayPlayerSockets[i] = serverSocket.accept();
 
             } catch (IOException e) {
-              System.out.println("Erro ao aceitar a conexão." + e);
+              System.out.println("Erro ao aceitar a conexão.["+i+"] - " + e);
               System.exit(1);
             }
             arrayPlayerThread[i] = new PlayerThread(arrayPlayerSockets[i]);
             arrayPlayerThread[i].start();
         }
 }
+
     static public void main(String[] args) throws InterruptedException {
         new Servidor();
     }
