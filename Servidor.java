@@ -925,7 +925,7 @@ class Servidor extends Thread {
         DataOutputStream streamEnviaAoCliente;
         DataInputStream streamRecebeDoCliente;
         //BufferedReader reader;
-        boolean boolTrocandoDados = false;
+        boolean boolTrocandoDados = false, boolIniciaJogo = false;
 
         PlayerThread(Socket socketRecebido) {
             try {
@@ -952,7 +952,7 @@ class Servidor extends Thread {
                         boolTrocandoDados = true;
 
                     //envia ao cliente posicoes
-
+                    streamEnviaAoCliente.writeUTF("POS ")
                 }
             }
             catch(NoSuchElementException e){
@@ -969,7 +969,6 @@ class Servidor extends Thread {
                 e1.printStackTrace();
             }
         }
-
 
         Rectangle getHitBox(){ //hitbox do player
             return new Rectangle(this.X,this.Y+15,30,35);
@@ -993,6 +992,26 @@ class Servidor extends Thread {
                 this.qtdeItemBomba--;
             }
         }
+
+        public void envia (String s){
+            try {
+                streamEnviaAoCliente.writeUTF(s);
+            } catch (IOException e) {
+                System.out.println("Erro aqui 2");
+            }
+        }
+
+        public void enviaPosicao(PlayerThread p[]) {
+            try{
+                for (int i = 0; i < 4; i++){
+                    streamEnviaAoCliente.writeInt(p[i].X);
+                    streamEnviaAoCliente.writeInt(p[i].Y);
+                }
+            } catch (Exception e){
+                System.out.println("Erro aqui");
+            }
+        }
+    }
     }
 
     Servidor() {
@@ -1035,7 +1054,7 @@ class Servidor extends Thread {
             System.out.println("\nErro no read (quantidade de players) - "+eRead);
         }
 
-        for (int i = 1; i <= intQuantidadeDePlayers; i++) { // Conecta os players restantes
+        for (int i = 1; i < intQuantidadeDePlayers; i++) { // Conecta os players restantes
             System.out.println("\nConectando o player["+i+"]");
             arrayPlayerSockets[i] = null;
             try {
@@ -1048,6 +1067,7 @@ class Servidor extends Thread {
             arrayPlayerThread[i] = new PlayerThread(arrayPlayerSockets[i]);
             arrayPlayerThread[i].start();
         }
+        boolIniciaJogo = true;
 }
 
     static public void main(String[] args) throws InterruptedException {
