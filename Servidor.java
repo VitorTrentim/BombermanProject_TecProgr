@@ -30,7 +30,7 @@ class Servidor extends Thread {
     //// DADOS DE CONEXÃO
     int PORTO = 12345;
     ServerSocket serverSocket = null;
-    boolean boolQuantPlayersRecebida = false;
+    boolean boolQuantPlayersRecebida = false, boolIniciaJogo = false;
     Socket arrayPlayerSockets[] = new Socket[4];
 
     //// DADOS PLAYER
@@ -925,7 +925,7 @@ class Servidor extends Thread {
         DataOutputStream streamEnviaAoCliente;
         DataInputStream streamRecebeDoCliente;
         //BufferedReader reader;
-        boolean boolTrocandoDados = false, boolIniciaJogo = false;
+        boolean boolTrocandoDados = false;
 
         PlayerThread(Socket socketRecebido) {
             try {
@@ -952,7 +952,7 @@ class Servidor extends Thread {
                         boolTrocandoDados = true;
 
                     //envia ao cliente posicoes
-                    streamEnviaAoCliente.writeUTF("POS ")
+                    streamEnviaAoCliente.writeUTF("POS ");
                 }
             }
             catch(NoSuchElementException e){
@@ -1011,7 +1011,7 @@ class Servidor extends Thread {
                 System.out.println("Erro aqui");
             }
         }
-    }
+
     }
 
     Servidor() {
