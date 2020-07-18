@@ -919,7 +919,8 @@ class Servidor extends Thread {
         int vida = 3, danoRecente = 0, velocidade = 4, qtdeItemBota, qtdeItemBomba, qtdeItemExplosao;
         boolean boolDanoRecente = false, boolStunned = false, moveRight = false, moveLeft = false, moveDown = false, moveUp = false;
         int estado = PARADO, X = 60, Y = 40, maxBombas = 2, bombaSize = 1;
-
+        int QuantidadeDePlayers = 0;
+        int id = 0;
         //// alteração socket
         Socket playerSocket;
         DataOutputStream streamEnviaAoCliente;
@@ -944,15 +945,29 @@ class Servidor extends Thread {
                 System.out.println("\nPlayer run");
                 String codigoSocket;
 
-                while(!boolQuantPlayersRecebida){}//While para segurar a thread
+                while(!boolIniciaJogo){
+
+                }//While para segurar a thread
 
                 System.out.println("\nTrocando Dados = true");
+
+                streamEnviaAoCliente.writeUTF ("JP");
                 while(true){
                     if(!boolTrocandoDados)
                         boolTrocandoDados = true;
 
                     //envia ao cliente posicoes
-                    streamEnviaAoCliente.writeUTF("POS ");
+                    streamEnviaAoCliente.writeUTF("pos");
+                    for(int i=0 ; i<QuantidadeDePlayers ; i++){
+                        for(int K=0 ; K<QuantidadeDePlayers ; K++){
+                            if(arrayPlayerThread[i].id == K)
+                                continue;
+                            arrayPlayerThread[K].streamEnviaAoCliente.writeUTF(" P"+i+" "+arrayPlayerThread[i].X+" "+arrayPlayerThread[i].Y);
+                        }
+
+                    }
+
+
                 }
             }
             catch(NoSuchElementException e){
@@ -1001,17 +1016,6 @@ class Servidor extends Thread {
             }
         }
 
-        public void enviaPosicao(PlayerThread p[]) {
-            try{
-                for (int i = 0; i < 4; i++){
-                    streamEnviaAoCliente.writeInt(p[i].X);
-                    streamEnviaAoCliente.writeInt(p[i].Y);
-                }
-            } catch (Exception e){
-                System.out.println("Erro aqui");
-            }
-        }
-
     }
 
     Servidor() {
@@ -1054,6 +1058,7 @@ class Servidor extends Thread {
             System.out.println("\nErro no read (quantidade de players) - "+eRead);
         }
 
+
         for (int i = 1; i < intQuantidadeDePlayers; i++) { // Conecta os players restantes
             System.out.println("\nConectando o player["+i+"]");
             arrayPlayerSockets[i] = null;
@@ -1067,6 +1072,12 @@ class Servidor extends Thread {
             arrayPlayerThread[i] = new PlayerThread(arrayPlayerSockets[i]);
             arrayPlayerThread[i].start();
         }
+
+        for (int i = 0; i < intQuantidadeDePlayers; i++){
+            arrayPlayerThread[i].QuantidadeDePlayers = intQuantidadeDePlayers;
+            arrayPlayerThread[i].id = i;
+        }
+
         boolIniciaJogo = true;
 }
 

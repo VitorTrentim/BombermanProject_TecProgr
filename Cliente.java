@@ -87,8 +87,11 @@ class Cliente extends JFrame {
             
             //// Controlar o dano recente do player
             while (rede.continua()) {
-                rede.recebePosicoesPlayers(arrayPlayers);
                 String tipo = rede.recebeMensagem();
+                if (tipo.equals("PrimConex")){
+                    rede.streamEnviaAoServidor.writeUTF ("2");
+                }
+                System.out.println(tipo);
                 if (tipo == "Vida") {
                     if (arrayPlayers[0].boolDanoRecente) {
                         if (arrayPlayers[0].danoRecente++ == 0) {
@@ -160,10 +163,9 @@ class Cliente extends JFrame {
                         }
                     }
                 }
-                rede.enviaPosicao("pos", arrayPlayers[0].getX(), arrayPlayers[0].getY());
+               // rede.enviaPosicao("pos", arrayPlayers[0].getX(), arrayPlayers[0].getY());
                 rede.descarregaEnvio();
-
-
+                rede.recebePosicoesPlayers(arrayPlayers);
 
                 ///////
                 repaint();
@@ -1709,15 +1711,16 @@ class Cliente extends JFrame {
                 System.exit(0);
             }
         }
-        public void enviaPosicao(String tipo, int x, int y) {
-            try {
-                streamEnviaAoServidor.writeUTF(tipo);
-                streamEnviaAoServidor.writeInt(x);
-                streamEnviaAoServidor.writeInt(y);
-            } catch (IOException e) {
-                temDados = false;
-            }
-        }
+//        public void enviaPosicao(String tipo, int x, int y) {
+//            try {
+//                streamEnviaAoServidor.writeUTF(tipo);
+//
+//                streamEnviaAoServidor.writeUTF(Integer.toString(x));
+//                streamEnviaAoServidor.writeUTF(Integer.toString(y));
+//            } catch (IOException e) {
+//                temDados = false;
+//            }
+//        }
         public void enviaBomba(String tipo, int x, int y){
             try {
                 streamEnviaAoServidor.writeUTF(tipo);
@@ -1743,23 +1746,23 @@ class Cliente extends JFrame {
         public void recebeVida(Player[] player) {
             try {
               for (int i = 0; i < 4; i++){
-                    player[i].vida = streamRecebeDoServidor.readInt();
+                    player[i].vida = Integer.parseInt(streamRecebeDoServidor.readUTF());
               }  
             } catch (IOException e) {
               temDados = false;
             }
           }
 
-        public void recebePosicoesPlayers(Player[] player) {
-            try {
-                for (int i = 0; i < 4; i++) {
-                    player[i].X = streamRecebeDoServidor.readInt();
-                    player[i].Y = streamRecebeDoServidor.readInt();
-                }
-            } catch (IOException e) {
-                temDados = false;
-            }
-        }
+//        public void recebePosicoesPlayers(Player[] player) {
+//            try {
+//                for (int i = 0; i < 4; i++) {
+//                    player[i].X = Integer.parseInt(streamRecebeDoServidor.readUTF());
+//                    player[i].Y = Integer.parseInt(streamRecebeDoServidor.readUTF());
+//                }
+//            } catch (IOException e) {
+//                temDados = false;
+//            }
+//        }
 
         public void recebePosicoesBombas(){ // 
 
