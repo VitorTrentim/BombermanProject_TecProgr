@@ -24,18 +24,20 @@ import java.net.Socket;
 import java.util.NoSuchElementException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.util.Scanner;
 
 class Servidor extends Thread {
     //// DADOS DE CONEXÃO
     int PORTO = 12345;
     ServerSocket serverSocket = null;
-    boolean boolGameRunning = false;
+    boolean boolQuantPlayersRecebida = false;
     Socket arrayPlayerSockets[] = new Socket[4];
 
     //// DADOS PLAYER
     final int PERS1 = 1, PERS2 = 2, PERS3 = 3, PERS4 = 4;
     PlayerThread arrayPlayerThread[] = new PlayerThread[4];
-    int quantidadeDePlayers = 0;
+    String stringQuantidadeDePlayers;
+    int intQuantidadeDePlayers;
 
     final int PARADO = 0, ANDANDO_DIREITA = 1, ANDANDO_ESQUERDA = 2, ANDANDO_FRENTE = 3, ANDANDO_COSTAS = 4,
             DANIFICADO = 5, LENGTH_IMAGENS_PLAYER = 6;
@@ -922,12 +924,15 @@ class Servidor extends Thread {
         Socket playerSocket;
         DataOutputStream streamEnviaAoCliente;
         DataInputStream streamRecebeDoCliente;
-        BufferedReader reader;
+        //BufferedReader reader;
+        boolean boolTrocandoDados = false;
+
         PlayerThread(Socket socketRecebido) {
             try {
                 this.playerSocket = socketRecebido;
-                streamRecebeDoCliente = new DataInputStream(socketRecebido.getInputStream());
-                streamEnviaAoCliente = new DataOutputStream(socketRecebido.getOutputStream());
+                this.streamRecebeDoCliente = new DataInputStream(socketRecebido.getInputStream());
+                this.streamEnviaAoCliente = new DataOutputStream(socketRecebido.getOutputStream());
+                //this.reader = new BufferedReader(new InputStreamReader(streamRecebeDoCliente));
 
             } catch (Exception erroPlayer) {
                 System.out.println("Erro (Player): " + erroPlayer);
@@ -937,33 +942,34 @@ class Servidor extends Thread {
         public void run() {
             try {
                 System.out.println("\nPlayer run");
-                reader = new BufferedReader(new InputStreamReader(streamRecebeDoCliente));  
                 String codigoSocket;
 
-                while( (codigoSocket = reader.readLine()) != null){
-                    if("bomba".equalsIgnoreCase(codigoSocket)){
-                        System.out.println("\nBomba!");
-                    }
+                while(!boolQuantPlayersRecebida){}//While para segurar a thread
 
-                }
+                System.out.println("\nTrocando Dados = true");
+                while(true){
+                    if(!boolTrocandoDados)
+                        boolTrocandoDados = true;
 
-                streamEnviaAoCliente.close();
-                streamRecebeDoCliente.close();
-                playerSocket.close();
+                    //envia ao cliente posicoes
 
-            }catch(IOException e){
-                try {
-                    playerSocket.close();
-                }
-                catch (IOException e1) {
-                    e1.printStackTrace();
                 }
             }
             catch(NoSuchElementException e){
             }
             catch(Exception ex){
             }
+
+            try {
+                streamEnviaAoCliente.close();
+                streamRecebeDoCliente.close();
+                playerSocket.close();
+            }
+            catch (IOException e1) {
+                e1.printStackTrace();
+            }
         }
+
 
         Rectangle getHitBox(){ //hitbox do player
             return new Rectangle(this.X,this.Y+15,30,35);
@@ -992,7 +998,7 @@ class Servidor extends Thread {
     Servidor() {
         try{
             serverSocket = new ServerSocket(PORTO);
-            
+            // CONEXÃO
             System.out.println("\nAguardando primeira conexao");
             arrayPlayerSockets[0] = serverSocket.accept();
             System.out.println("\nPrimeira conexao estabelecida. Enviando o clientSocket ao PlayerThread[0]");
@@ -1000,7 +1006,7 @@ class Servidor extends Thread {
             System.out.println("\nIniciando a thread PlayerThread[0]");
             arrayPlayerThread[0].start();
             //// primeira mensagem ao cliente 
-            arrayPlayerThread[0].streamEnviaAoCliente.write("\nConexao com o servidor estabelecida.".getBytes());
+            arrayPlayerThread[0].streamEnviaAoCliente.writeUTF("PrimConex");
             
         }
         catch(Exception e){
@@ -1011,15 +1017,25 @@ class Servidor extends Thread {
         
         try{
             System.out.println("\nAguardando qtde players");
-            while((quantidadeDePlayers = Integer.parseInt(arrayPlayerThread[0].reader.readLine())) == 0){
-                quantidadeDePlayers = Integer.parseInt(arrayPlayerThread[0].reader.readLine());
+            while(stringQuantidadeDePlayers == null){
+                stringQuantidadeDePlayers = arrayPlayerThread[0].streamRecebeDoCliente.readUTF();
+                intQuantidadeDePlayers = Integer.parseInt(stringQuantidadeDePlayers);
+                if(stringQuantidadeDePlayers == null || (intQuantidadeDePlayers < 1 && intQuantidadeDePlayers > 4)){
+                    stringQuantidadeDePlayers = null;
+                    System.out.println("\nQuantidade de players inválida. Repetindo.");
+                    arrayPlayerThread[0].streamEnviaAoCliente.write("InvQtdPlayer".getBytes());
+                }
+                else {
+                    System.out.println("\nQuantidade de players validada");
+                    arrayPlayerThread[0].streamEnviaAoCliente.write("AccQtdPlayer".getBytes());
+                }
             }
-            System.out.println("\nLeu quantidadeDePlayers = " + quantidadeDePlayers);   
+            System.out.println("\nLeu quantidadeDePlayers = " + intQuantidadeDePlayers);
         }catch (Exception eRead){
-            System.out.println("\nErro no readInt (quantidade de players) - "+eRead);
+            System.out.println("\nErro no read (quantidade de players) - "+eRead);
         }
 
-        for (int i = 1; i < quantidadeDePlayers; i++) { // Conecta os players restantes
+        for (int i = 1; i <= intQuantidadeDePlayers; i++) { // Conecta os players restantes
             System.out.println("\nConectando o player["+i+"]");
             arrayPlayerSockets[i] = null;
             try {
