@@ -24,8 +24,11 @@ class ClienteTESTE extends JFrame {
     boolean boolJogoComecou = false, boolJogoRodando = false;
     String idString;
     int id = -1;
-    FluxoDoJogo loopDoJogo = new FluxoDoJogo();
+    LeituraDoFluxo threadLeitura = new LeituraDoFluxo();
+    EnvioDoFluxo threadEnvio = new EnvioDoFluxo();
     MovimentoDoPlayerDoCliente movimentoPlayerAtual = new MovimentoDoPlayerDoCliente();
+    String leitura;
+    String[] leituraPartes;
 
     //// DADOS PLAYER
     final int PERS1 = 1, PERS2 = 2;
@@ -1006,8 +1009,9 @@ class ClienteTESTE extends JFrame {
             });
             add(mult, BorderLayout.SOUTH);
             barraSuperior.tempo.start();
-            loopDoJogo.start();
             movimentoPlayerAtual.start();
+            threadEnvio.start();
+            threadLeitura.start();
             repinta.start();
             boolJogoRodando = true;
             pack();
@@ -1020,6 +1024,7 @@ class ClienteTESTE extends JFrame {
         Socket socket = null;
         DataInputStream streamRecebeDoServidor = null;
         DataOutputStream streamEnviaAoServidor = null;
+
         boolean temDados = true;
         ClienteTESTE jogo;
         public Rede(ClienteTESTE jogo, String IP, int porto){
@@ -1157,6 +1162,24 @@ class ClienteTESTE extends JFrame {
                 System.out.println("Entrou na movimentação 1");
                 /////////// Movimentação do player
                 while(boolJogoRodando) {
+
+                    ///
+                    if (arrayPlayers[id-1].boolDanoRecente) {
+                        if (arrayPlayers[id-1].danoRecente++ == 0) {
+                            checkVida();
+                            scoreVida -= 100;
+                            arrayPlayers[id-1].personagem = arrayPlayers[id-1].imagensPlayer[DANIFICADO];
+                            arrayPlayers[id-1].boolStunned = true;
+                        }
+                        if (arrayPlayers[id-1].danoRecente >= 20) { // numero de "ticks" de imobilização
+                            arrayPlayers[id-1].boolStunned = false;
+                        }
+                        if (arrayPlayers[id-1].danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
+                            arrayPlayers[id-1].boolDanoRecente = false;
+                            arrayPlayers[id-1].danoRecente = 0;
+                        }
+                    }
+
                     //Checa se está danificado
                     if (arrayPlayers[id-1] != null && arrayPlayers[id-1].boolDanoRecente) {
                         System.out.println("Entrou no primeiro if");
@@ -1242,38 +1265,60 @@ class ClienteTESTE extends JFrame {
         }
     }
 
-    class FluxoDoJogo extends Thread {
-        public void run(){
-            int i;
+    class LeituraDoFluxo extends Thread {
+        public void run() {
+            int AuxID;
             try {
-                //while(!boolJogoComecou){} // segura o inicio
-
                 /////////// Leitura e envio dos dados do jogo
                 while (boolJogoRodando) {
-                    if (arrayPlayers[id-1].boolDanoRecente) {
-                        if (arrayPlayers[id-1].danoRecente++ == 0) {
-                            checkVida();
-                            scoreVida -= 100;
-                            arrayPlayers[id-1].personagem = arrayPlayers[id-1].imagensPlayer[DANIFICADO];
-                            arrayPlayers[id-1].boolStunned = true;
-                        }
-                        if (arrayPlayers[id-1].danoRecente >= 20) { // numero de "ticks" de imobilização
-                            arrayPlayers[id-1].boolStunned = false;
-                        }
-                        if (arrayPlayers[id-1].danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
-                            arrayPlayers[id-1].boolDanoRecente = false;
-                            arrayPlayers[id-1].danoRecente = 0;
+                    while (true) {
+                        System.out.println("Entrou no while do run. Antes da leitura.");
+                        leitura = rede.streamRecebeDoServidor.readUTF();
+                        ///////// LEITURA
+                        System.out.println("Leitura player = " + leitura);
+                        leituraPartes = leitura.split(" ");
+                        System.out.println("Leitura[0] player" + id + " = " + leituraPartes[0]);
+
+                        if (leituraPartes[0].equals("POS") || leituraPartes[0].equals("BOM")) {
+                            break;
                         }
                     }
-
-                    ///////// Envia a posição do jogador desse cliente ao servidor
-                    rede.streamEnviaAoServidor.writeUTF("POS "+arrayPlayers[id-1].getX()+" "+arrayPlayers[id-1].getY()+" "+arrayPlayers[id-1].estado);
-                    //rede.descarregaEnvio();
+                    switch (leituraPartes[0]) {
+                        case "POS":
+                            AuxID = Integer.parseInt(leituraPartes[1])-1;
+                            arrayPlayers[AuxID].X = Integer.parseInt(leituraPartes[2]);
+                            arrayPlayers[AuxID].Y = Integer.parseInt(leituraPartes[3]);
+                            arrayPlayers[AuxID].estado = Integer.parseInt(leituraPartes[4]);
+                            //recebe:("POS "+"1 "+threadPlayer1.X+" "+threadPlayer1.Y+" "+threadPlayer1.estado)
+                            break;
+                        case "BOM":
+                            break;
+                    }
                     ///////
                     repaint();
                 }
-            }catch (Exception eRef){
-                System.out.println("Erro no refreshModels: "+eRef);
+            } catch (Exception eRef) {
+                System.out.println("Erro no refreshModels: " + eRef);
+            }
+        }
+    }
+
+    class EnvioDoFluxo extends Thread {
+        public void run() {
+            int AuxID;
+            try {
+                /////////// Leitura e envio dos dados do jogo
+                while (boolJogoRodando) {
+                    ///////// Envia a posição do jogador desse cliente ao servidor
+                    synchronized (movimentoPlayerAtual) {
+                        rede.streamEnviaAoServidor.writeUTF("POS " + arrayPlayers[id - 1].getX() + " " + arrayPlayers[id - 1].getY() + " " + arrayPlayers[id - 1].estado);
+                        rede.streamEnviaAoServidor.flush();
+                    }
+                    ///////
+                    repaint();
+                }
+            } catch (Exception eRef) {
+                System.out.println("Erro no refreshModels: " + eRef);
             }
         }
     }
