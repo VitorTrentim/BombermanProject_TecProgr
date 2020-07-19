@@ -31,11 +31,11 @@ class ServidorTESTE extends Thread {
     int PORTO = 12345;
     ServerSocket serverSocket = null;
     boolean boolQuantPlayersRecebida = false, boolIniciaJogo = false;
-    Socket arrayPlayerSockets[] = new Socket[4];
+    Socket arrayPlayerSockets[] = new Socket[2];
 
     //// DADOS PLAYER
-    final int PERS1 = 1, PERS2 = 2, PERS3 = 3, PERS4 = 4;
-    PlayerThread arrayPlayerThread[] = new PlayerThread[4];
+    final int PERS1 = 1, PERS2 = 2;
+    PlayerThread arrayPlayerThread[] = new PlayerThread[2];
     String stringQuantidadeDePlayers;
     int intQuantidadeDePlayers;
 
@@ -146,7 +146,7 @@ class ServidorTESTE extends Thread {
 
     void checkPlayerEnemyColision() {
         for (int i = 0; i < mult.arrayInimigos.size(); i++) {
-            for (int j = 0; j < 4 ; j++){
+            for (int j = 0; j < 2 ; j++){
                 if (arrayPlayerThread[i] != null && !arrayPlayerThread[i].boolDanoRecente && arrayPlayerThread[i].getHitBox().intersects(mult.arrayInimigos.get(i).getBounds())) {
                     arrayPlayerThread[i].danificado();
             }
@@ -157,7 +157,7 @@ class ServidorTESTE extends Thread {
     }
 
     void damageDelayControl() {
-        for (int i = 0 ; i < 4; i++){
+        for (int i = 0 ; i < 2; i++){
             if (arrayPlayerThread[i] != null && arrayPlayerThread[i].boolDanoRecente) {
                 if (arrayPlayerThread[i].danoRecente++ == 0) {
                     arrayPlayerThread[i].boolStunned = true;
@@ -176,7 +176,7 @@ class ServidorTESTE extends Thread {
 
     void checkPlayerItemColision() {
         for (int i = 0; i < arrayItens.size(); i++) {
-            for (int j = 0 ; j < 4 ; j++){
+            for (int j = 0 ; j < 2 ; j++){
                 if (arrayPlayerThread[i] != null && arrayPlayerThread[i].getHitBox().intersects(arrayItens.get(i).getBounds())) {
                     if (arrayItens.get(i).item == ITEM_BOTA) {
                         arrayPlayerThread[i].qtdeItemBota++;
@@ -919,7 +919,6 @@ class ServidorTESTE extends Thread {
         int vida = 3, danoRecente = 0, velocidade = 4, qtdeItemBota, qtdeItemBomba, qtdeItemExplosao;
         boolean boolDanoRecente = false, boolStunned = false, moveRight = false, moveLeft = false, moveDown = false, moveUp = false;
         int estado = PARADO, X = 60, Y = 40, maxBombas = 2, bombaSize = 1;
-        int QuantidadeDePlayers = 0;
         int id = 0;
         //// alteração socket
         Socket playerSocket;
@@ -946,10 +945,8 @@ class ServidorTESTE extends Thread {
         public void run() {
             try {
                 System.out.println("\nPlayer run");
-                String codigoSocket;
 
                 while(!boolIniciaJogo){
-
                 }//While para segurar a thread
 
                 System.out.println("\nTrocando Dados = true");
@@ -979,13 +976,11 @@ class ServidorTESTE extends Thread {
 
                     ///// ENVIO DOS DADOS AO CLIENTE
                     //envia ao cliente posicoes
-                    streamEnviaAoCliente.writeUTF("pos");
-                    for(int i=0 ; i<QuantidadeDePlayers ; i++){
-                        for(int K=0 ; K<QuantidadeDePlayers ; K++){
-                            if(arrayPlayerThread[i].id == K)
-                                continue;
-                            arrayPlayerThread[K].streamEnviaAoCliente.writeUTF(" P"+i+" "+arrayPlayerThread[i].X+" "+arrayPlayerThread[i].Y);
-                        }
+                    streamEnviaAoCliente.writeUTF("POS ");
+                    if(id == 0){
+                        streamEnviaAoCliente.writeUTF("P"+1+" "+arrayPlayerThread[1].X+" "+arrayPlayerThread[1].Y);
+                    } else {
+                        streamEnviaAoCliente.writeUTF("P"+0+" "+arrayPlayerThread[0].X+" "+arrayPlayerThread[0].Y);
                     }
 
                     //envia ao cliente o array das bombas
@@ -1049,60 +1044,34 @@ class ServidorTESTE extends Thread {
         try{
             serverSocket = new ServerSocket(PORTO);
             // CONEXÃO
-            System.out.println("\nAguardando primeira conexao");
+            System.out.println("\nAguardando primeira conexao.");
             arrayPlayerSockets[0] = serverSocket.accept();
-            System.out.println("\nPrimeira conexao estabelecida. Enviando o clientSocket ao PlayerThread[0]");
+            System.out.println("\nPlayer 1 conectado. Enviando o clientSocket ao PlayerThread.");
             arrayPlayerThread[0] = new PlayerThread(arrayPlayerSockets[0]);
-            System.out.println("\nIniciando a thread PlayerThread[0]");
+            System.out.println("\nIniciando a thread do Player 1.");
             arrayPlayerThread[0].start();
-            //// primeira mensagem ao cliente 
-            arrayPlayerThread[0].streamEnviaAoCliente.writeUTF("PrimConex");
-            
+            arrayPlayerThread[0].id = 0;
         }
         catch(Exception e){
-            System.out.println("\nErro na conexao. - "+e);
+            System.out.println("\nErro na conexao 1. - "+e);
             System.exit(1);
         }
 
-        
+
         try{
-            System.out.println("\nAguardando qtde players");
-            while(stringQuantidadeDePlayers == null){
-                stringQuantidadeDePlayers = arrayPlayerThread[0].streamRecebeDoCliente.readUTF();
-                intQuantidadeDePlayers = Integer.parseInt(stringQuantidadeDePlayers);
-                if(stringQuantidadeDePlayers == null || (intQuantidadeDePlayers < 1 && intQuantidadeDePlayers > 4)){
-                    stringQuantidadeDePlayers = null;
-                    System.out.println("\nQuantidade de players inválida. Repetindo.");
-                    arrayPlayerThread[0].streamEnviaAoCliente.write("InvQtdPlayer".getBytes());
-                }
-                else {
-                    System.out.println("\nQuantidade de players validada");
-                    arrayPlayerThread[0].streamEnviaAoCliente.write("AccQtdPlayer".getBytes());
-                }
-            }
-            System.out.println("\nLeu quantidadeDePlayers = " + intQuantidadeDePlayers);
-        }catch (Exception eRead){
-            System.out.println("\nErro no read (quantidade de players) - "+eRead);
+            serverSocket = new ServerSocket(PORTO);
+            // CONEXÃO
+            System.out.println("\nAguardando segunda conexao.");
+            arrayPlayerSockets[1] = serverSocket.accept();
+            System.out.println("\nPlayer 2 conectado. Enviando o clientSocket ao PlayerThread.");
+            arrayPlayerThread[1] = new PlayerThread(arrayPlayerSockets[10]);
+            System.out.println("\nIniciando a thread do Player 2.");
+            arrayPlayerThread[1].start();
+            arrayPlayerThread[1].id = 1;
         }
-
-
-        for (int i = 1; i < intQuantidadeDePlayers; i++) { // Conecta os players restantes
-            System.out.println("\nConectando o player["+i+"]");
-            arrayPlayerSockets[i] = null;
-            try {
-                arrayPlayerSockets[i] = serverSocket.accept();
-
-            } catch (IOException e) {
-              System.out.println("Erro ao aceitar a conexão.["+i+"] - " + e);
-              System.exit(1);
-            }
-            arrayPlayerThread[i] = new PlayerThread(arrayPlayerSockets[i]);
-            arrayPlayerThread[i].start();
-        }
-
-        for (int i = 0; i < intQuantidadeDePlayers; i++){
-            arrayPlayerThread[i].QuantidadeDePlayers = intQuantidadeDePlayers;
-            arrayPlayerThread[i].id = i;
+        catch(Exception e){
+            System.out.println("\nErro na conexao 2. - "+e);
+            System.exit(1);
         }
 
         boolIniciaJogo = true;
