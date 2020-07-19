@@ -26,7 +26,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.util.Scanner;
 
-class Servidor extends Thread {
+class ServidorTESTE extends Thread {
     //// DADOS DE CONEXÃO
     int PORTO = 12345;
     ServerSocket serverSocket = null;
@@ -955,6 +955,7 @@ class Servidor extends Thread {
                 System.out.println("\nTrocando Dados = true");
 
                 streamEnviaAoCliente.writeUTF ("JP");
+                streamEnviaAoCliente.flush();
                 while(true){
                     if(!boolTrocandoDados)
                         boolTrocandoDados = true;
@@ -1044,7 +1045,7 @@ class Servidor extends Thread {
 
     }
 
-    Servidor() {
+    ServidorTESTE() {
         try{
             serverSocket = new ServerSocket(PORTO);
             // CONEXÃO
@@ -1108,6 +1109,6 @@ class Servidor extends Thread {
 }
 
     static public void main(String[] args) throws InterruptedException {
-        new Servidor();
+        new ServidorTESTE();
     }
 }

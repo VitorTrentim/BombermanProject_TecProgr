@@ -18,10 +18,10 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Random;
 
-class Cliente extends JFrame {
+class ClienteTESTE extends JFrame {
     /// Rede
     Rede rede = new Rede(this, "127.0.0.1", 12345);
-    boolean jogoComecou = false;
+    boolean boolJogoComecou = false;
     //// DADOS PLAYER
     final int PERS1 = 1, PERS2 = 2, PERS3 = 3, PERS4 = 4;
     Player arrayPlayers[] = {new Player(PERS1), new Player(PERS2), new Player(PERS3), new Player(PERS4)};
@@ -85,10 +85,10 @@ class Cliente extends JFrame {
     Timer refreshModels = new Timer(25, e -> {
         int i;
         try {
-            while(!jogoComecou){} // segura o inicio
+            while(!boolJogoComecou){} // segura o inicio
 
             while (rede.continua()) {
-                if (tipo == "Vida") {
+                /*if (tipo == "Vida") {
                     if (arrayPlayers[0].boolDanoRecente) {
                         if (arrayPlayers[0].danoRecente++ == 0) {
                             checkVida();
@@ -104,7 +104,7 @@ class Cliente extends JFrame {
                             arrayPlayers[0].danoRecente = 0;
                         }
                     }
-                 }
+                 }*/
 
                 /////////// Movimentação do player
                 if (!arrayPlayers[0].boolStunned && arrayPlayers[0].getVida() > 0) { // Se não tomou dano recente (stun) e está vivo
@@ -985,7 +985,7 @@ class Cliente extends JFrame {
     }
 
     class Bomba{
-        int x, y,indexImage=0, dono;
+        int x, y,indexImage=0, dono, valorBombaSize;
         Image[] arrayImagensBomba;
         Rectangle hitBox;
         boolean boolBloqueandoPlayer = false, boolBloqueandoInimigo = false;
@@ -1616,27 +1616,33 @@ class Cliente extends JFrame {
         DataInputStream streamRecebeDoServidor = null;
         DataOutputStream streamEnviaAoServidor = null;
         boolean temDados = true;
-        Cliente jogo;
-        public Rede(Cliente jogo, String IP, int porto){
+        ClienteTESTE jogo;
+        public Rede(ClienteTESTE jogo, String IP, int porto){
             try {
                 this.jogo = jogo;
                 socket = new Socket(IP, porto);
                 streamEnviaAoServidor = new DataOutputStream(socket.getOutputStream());
                 streamRecebeDoServidor = new DataInputStream(socket.getInputStream());
-
-                String tipo = rede.recebeMensagem();
-                if (tipo.equals("PrimConex")){
+                
+                String tipo = streamRecebeDoServidor.readUTF();
+                while (tipo.equals("PrimConex")){
                     //é o primeiro player, precisa enviar o numero de players
-                    rede.streamEnviaAoServidor.writeUTF ("2");
+                    streamEnviaAoServidor.writeUTF ("2");
+                    tipo = recebeMensagem();
+                    if(tipo.startsWith("Inv")){
+                        tipo = "PrimConex";
+                    }
+                    else if (tipo.startsWith("Acc")){
+                        System.out.println("\nQuantidade de players aceita pelo servidor.");
+                    }
                 }
-                else if (tipo.equals("Aguarde")){
-                    //começou;
-                } else if (tipo.equals("JP")){
-                    //start
+                /*
+                tipo = recebeMensagem();
+                while(!tipo.equals("JP")){ //enquanto nao receber JP fica no while 
+                    boolJogoComecou = true;
+                    tipo = recebeMensagem();
                 }
-                System.out.println(tipo);
-
-
+                System.out.println(tipo);*/
             
             } catch (UnknownHostException e) {
                 JOptionPane.showMessageDialog(jogo,"Servidor não encontrado!\n   " + e, "Erro", JOptionPane.ERROR_MESSAGE);
@@ -1713,7 +1719,7 @@ class Cliente extends JFrame {
 
     }
 
-    Cliente(){
+    ClienteTESTE(){
         super("Bomb Your Way Out");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         getContentPane().setBackground(Color.black);
@@ -1734,7 +1740,12 @@ class Cliente extends JFrame {
                     } else if (e.getKeyCode() == KeyEvent.VK_UP) {
                         arrayPlayers[0].moveUp = true;
                     } else if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-                            rede.streamEnviaAoServidor.writeUTF("BOMB "+arrayPlayers[0].getX()+" "+arrayPlayers[0].getY()+" "+arrayPlayers[0].bombaSize);
+                        try{
+                            rede.streamEnviaAoServidor.writeUTF("BOMB "+arrayPlayers[0].getX()+" "+arrayPlayers[0].getY()+" "+arrayPlayers[0].bombaSize+" "+arrayPlayers[0].bombaSize);
+                        }
+                        catch(Exception ex){
+                            System.out.println("\nErro ao criar bomba: "+ex);
+                        }
                     }
                 }
                 else if (gameControler == NAV_MENU){
@@ -1808,6 +1819,6 @@ class Cliente extends JFrame {
         setVisible(true);
     }
     static public void main(String[] args) throws InterruptedException {
-        new Cliente();
+        new ClienteTESTE();
     }
 }
