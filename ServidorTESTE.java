@@ -951,7 +951,7 @@ class ServidorTESTE extends Thread {
 
                 System.out.println("\nTrocando Dados = true");
 
-                streamEnviaAoCliente.writeUTF ("JP");
+                streamEnviaAoCliente.writeUTF (Integer.toString(id));
                 streamEnviaAoCliente.flush();
                 while(true){
                     if(!boolTrocandoDados)
@@ -968,6 +968,7 @@ class ServidorTESTE extends Thread {
                             //recebe:
                         }
                     } else if (leituraPartes[0].startsWith("POS")){
+                        System.out.println("Posicao player"+id+" = "+X+","+Y);
                         X = Integer.parseInt(leituraPartes[1]);
                         Y = Integer.parseInt(leituraPartes[2]);
                         estado = Integer.parseInt(leituraPartes[3]);
@@ -1059,12 +1060,11 @@ class ServidorTESTE extends Thread {
 
 
         try{
-            serverSocket = new ServerSocket(PORTO);
             // CONEXÃO
             System.out.println("\nAguardando segunda conexao.");
             arrayPlayerSockets[1] = serverSocket.accept();
             System.out.println("\nPlayer 2 conectado. Enviando o clientSocket ao PlayerThread.");
-            arrayPlayerThread[1] = new PlayerThread(arrayPlayerSockets[10]);
+            arrayPlayerThread[1] = new PlayerThread(arrayPlayerSockets[1]);
             System.out.println("\nIniciando a thread do Player 2.");
             arrayPlayerThread[1].start();
             arrayPlayerThread[1].id = 1;
