@@ -23,8 +23,8 @@ class ClienteTESTE extends JFrame {
     Rede rede = new Rede(this, "127.0.0.1", 12345);
     boolean boolJogoComecou = false;
     //// DADOS PLAYER
-    final int PERS1 = 1, PERS2 = 2, PERS3 = 3, PERS4 = 4;
-    Player arrayPlayers[] = {new Player(PERS1), new Player(PERS2), new Player(PERS3), new Player(PERS4)};
+    final int PERS1 = 1, PERS2 = 2;
+    Player arrayPlayers[] = {new Player(PERS1), new Player(PERS2)};
     //Player currentPlayer = new Player(PERS1);
     final int PARADO = 0, ANDANDO_DIREITA = 1,ANDANDO_ESQUERDA = 2, ANDANDO_FRENTE = 3, ANDANDO_COSTAS = 4, DANIFICADO = 5, LENGTH_IMAGENS_PLAYER = 6;
     String nome_do_Player, score_do_Player = null;
@@ -182,9 +182,7 @@ class ClienteTESTE extends JFrame {
             try {
                 if (numeroFase == MULTIPLAYER1) {
                     arrayPlayers[0].X = 60; arrayPlayers[0].Y = 40;
-                    arrayPlayers[1].X = 60; arrayPlayers[1].Y = 540;
-                    arrayPlayers[2].X = 860; arrayPlayers[2].Y = 540;
-                    arrayPlayers[3].X = 860; arrayPlayers[3].Y = 40;   
+                    arrayPlayers[1].X = 860; arrayPlayers[1].Y = 40;
                     try {
                         imagensAmbiente[FUNDO] = new ImageIcon(getClass().getResource("Resources/FaseMultiplayer/chao1.png")).getImage();
                         imagensAmbiente[BLOCO] = new ImageIcon("Resources/FaseMultiplayer/blocoFixo.png").getImage();
@@ -761,7 +759,7 @@ class ClienteTESTE extends JFrame {
                // g.drawImage(arrayPlayers[0].personagem, arrayPlayers[0].getX(), arrayPlayers[0].getY(), 30,50,this);
                 
                
-               for (i = 0; i < 4; i++){
+               for (i = 0; i < 2; i++){
                     if (arrayPlayers[i] != null){
                         g.drawImage(arrayPlayers[i].personagem, arrayPlayers[i].getX(), arrayPlayers[i].getY(), 30, 50, this);
                         System.out.println("16");
@@ -788,7 +786,7 @@ class ClienteTESTE extends JFrame {
                     if(barraSuperior.valorTempo <= 0){
                         System.out.println("EMPATE?");
                     }else {
-                        for (i = 0; i < 4; i++){
+                        for (i = 0; i < 2; i++){
                             if (arrayPlayers[i]!=null)
                                 if (arrayPlayers[i].getVida() <=0 ){
                                     System.out.println("Player " + i + "morto");
