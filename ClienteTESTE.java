@@ -94,8 +94,8 @@ class ClienteTESTE extends JFrame {
 
         Fase(){
             try {
-                arrayPlayers[0].X = 60; arrayPlayers[0].Y = 40;
-                arrayPlayers[1].X = 860; arrayPlayers[1].Y = 540;
+                arrayPlayers[0].X = 60; arrayPlayers[0].Y = 40; arrayPlayers[0].boolPosicaoValidada = true;
+                arrayPlayers[1].X = 860; arrayPlayers[1].Y = 540; arrayPlayers[1].boolPosicaoValidada = true;
                 try {
                     imagensAmbiente[FUNDO] = new ImageIcon(getClass().getResource("Resources/FaseMultiplayer/chao1.png")).getImage();
                     imagensAmbiente[BLOCO] = new ImageIcon("Resources/FaseMultiplayer/blocoFixo.png").getImage();
@@ -395,7 +395,7 @@ class ClienteTESTE extends JFrame {
                 
                
                for (i = 0; i < 2; i++){
-                    if (arrayPlayers[i] != null){
+                    if (arrayPlayers[i].boolPosicaoValidada){
                         g.drawImage(arrayPlayers[i].personagem, arrayPlayers[i].getX(), arrayPlayers[i].getY(), 30, 50, this);
                         g.drawRect(arrayPlayers[i].getX(), arrayPlayers[i].getY()+15, 30, 35);
                     }
@@ -583,11 +583,13 @@ class ClienteTESTE extends JFrame {
     }
 
     class Player{
-        int estado = PARADO, X = 60, Y = 40, maxBombas = 2, bombaSize = 1; //bombaSize = tamanho da bomba do player
+        int estado = PARADO, X, Y, maxBombas = 2, bombaSize = 1; //bombaSize = tamanho da bomba do player
         Image[] imagensPlayer = new Image[LENGTH_IMAGENS_PLAYER];
         Image personagem;
         int vida = 3, danoRecente = 0, velocidade = 4, qtdeItemBota, qtdeItemBomba, qtdeItemExplosao;
         boolean boolDanoRecente = false, boolStunned = false, moveRight = false, moveLeft = false, moveDown = false, moveUp = false;
+
+        boolean boolPosicaoValidada = false;
 
         Player(int tipoPersonagem){
             try{
@@ -1142,14 +1144,31 @@ class ClienteTESTE extends JFrame {
             System.out.println("Request Passo 1");
             idString = rede.streamRecebeDoServidor.readUTF();
             while (!idString.equals("1") && !idString.equals("2")) { //enquanto não receber 1 ou 2
-                System.out.println("preso no while");
+                System.out.println("preso no while RequestID");
                 rede.streamEnviaAoServidor.writeUTF("IdRequest"); //envia pedido para receber o id
+                rede.streamEnviaAoServidor.flush();
                 idString = rede.streamRecebeDoServidor.readUTF(); //lê o input
                 System.out.println("Request Passo 2");
             }
             id = Integer.parseInt(idString);
             System.out.println("RECEBEU O ID " + id);
-            arrayPlayers[id-1] = arrayPlayers[id-1];
+
+            rede.streamEnviaAoServidor.writeUTF("POSINIC "+id+" "+ arrayPlayers[id - 1].X + " " + arrayPlayers[id - 1].Y + " " + arrayPlayers[id - 1].estado);
+            rede.streamEnviaAoServidor.flush();
+            System.out.println("Player"+id+" ENVIOU POS INICIAK = "+"POSINIC "+id+" "+ arrayPlayers[id - 1].X + " " + arrayPlayers[id - 1].Y + " " + arrayPlayers[id - 1].estado);
+
+            System.out.println("Envia POS inicial Passo 1");
+            idString = rede.streamRecebeDoServidor.readUTF();
+            while (!idString.equals("PosAcc")) { //enquanto não receber PosAcc
+                System.out.println("preso no while PosAcc");
+                rede.streamEnviaAoServidor.writeUTF("POSINIC "+id+" "+ arrayPlayers[id - 1].X + " " + arrayPlayers[id - 1].Y + " " + arrayPlayers[id - 1].estado);
+                rede.streamEnviaAoServidor.flush();
+                idString = rede.streamRecebeDoServidor.readUTF(); //lê o input
+                System.out.println("Envia POS inicial Passo 2");
+            }
+            id = Integer.parseInt(idString);
+            System.out.println("RECEBEU O ID " + id);
+
         } catch(Exception e){
             System.out.println("Problema no ResquestID: "+e);
         }
@@ -1161,7 +1180,7 @@ class ClienteTESTE extends JFrame {
             try {
                 System.out.println("Entrou na movimentação 1");
                 /////////// Movimentação do player
-                while(boolJogoRodando) {
+                while(true) {
 
                     ///
                     if (arrayPlayers[id-1].boolDanoRecente) {
@@ -1267,58 +1286,68 @@ class ClienteTESTE extends JFrame {
 
     class LeituraDoFluxo extends Thread {
         public void run() {
+            System.out.println("Player"+id+" LEITURA START");
             int AuxID;
             try {
                 /////////// Leitura e envio dos dados do jogo
-                while (boolJogoRodando) {
+                while (true) {
                     while (true) {
-                        System.out.println("Entrou no while do run. Antes da leitura.");
+                        sleep(25);
+                        System.out.println("Player"+id+" LEITURA");
                         leitura = rede.streamRecebeDoServidor.readUTF();
                         ///////// LEITURA
+                        System.out.println("Player"+id+" LEITURA = "+leitura);
                         System.out.println("Leitura player = " + leitura);
                         leituraPartes = leitura.split(" ");
-                        System.out.println("Leitura[0] player" + id + " = " + leituraPartes[0]);
+                        System.out.println("Player"+id+" SPLIT = "+leituraPartes[0]);
 
                         if (leituraPartes[0].equals("POS") || leituraPartes[0].equals("BOM")) {
+                            System.out.println("Player"+id+" LEU UM COMANDO");
                             break;
                         }
                     }
                     switch (leituraPartes[0]) {
                         case "POS":
-                            AuxID = Integer.parseInt(leituraPartes[1])-1;
+                            System.out.println("Player"+id+" RECEBEU POS = "+leitura);
+                            AuxID = Integer.parseInt(leituraPartes[1]);
+                            AuxID--;
                             arrayPlayers[AuxID].X = Integer.parseInt(leituraPartes[2]);
                             arrayPlayers[AuxID].Y = Integer.parseInt(leituraPartes[3]);
                             arrayPlayers[AuxID].estado = Integer.parseInt(leituraPartes[4]);
-                            //recebe:("POS "+"1 "+threadPlayer1.X+" "+threadPlayer1.Y+" "+threadPlayer1.estado)
+                            System.out.println("Player"+id+" - Setting Player["+AuxID+"].X = "+Integer.parseInt(leituraPartes[2])+" Player["+AuxID+"].Y = "+Integer.parseInt(leituraPartes[3])+" Player["+AuxID+"].estado = "+Integer.parseInt(leituraPartes[4]));
+                            //recebe:("POS "+id+" "+threadPlayer1.X+" "+threadPlayer1.Y+" "+threadPlayer1.estado)
                             break;
                         case "BOM":
+                            System.out.println("Player"+id+" RECEBEU BOM = "+leitura);
                             break;
                     }
                     ///////
                     repaint();
                 }
             } catch (Exception eRef) {
-                System.out.println("Erro no refreshModels: " + eRef);
+                System.out.println("Erro no LeituraDoFluxo: " + eRef);
             }
         }
     }
 
     class EnvioDoFluxo extends Thread {
         public void run() {
-            int AuxID;
+            System.out.println("Player"+id+" ENVIO START");
             try {
                 /////////// Leitura e envio dos dados do jogo
-                while (boolJogoRodando) {
+                while (true) {
+                    sleep(25);
                     ///////// Envia a posição do jogador desse cliente ao servidor
-                    synchronized (movimentoPlayerAtual) {
-                        rede.streamEnviaAoServidor.writeUTF("POS " + arrayPlayers[id - 1].getX() + " " + arrayPlayers[id - 1].getY() + " " + arrayPlayers[id - 1].estado);
-                        rede.streamEnviaAoServidor.flush();
-                    }
+                    //synchronized (movimentoPlayerAtual) {
+                    rede.streamEnviaAoServidor.writeUTF("POS "+id+" "+ arrayPlayers[id - 1].X + " " + arrayPlayers[id - 1].Y + " " + arrayPlayers[id - 1].estado);
+                    rede.streamEnviaAoServidor.flush();
+                    System.out.println("Player"+id+" ENVIOU POS = "+"POS "+id+" "+ arrayPlayers[id - 1].X + " " + arrayPlayers[id - 1].Y + " " + arrayPlayers[id - 1].estado);
+                    //}
                     ///////
                     repaint();
                 }
             } catch (Exception eRef) {
-                System.out.println("Erro no refreshModels: " + eRef);
+                System.out.println("Erro no EnvioDoFluxo: " + eRef);
             }
         }
     }

@@ -950,7 +950,7 @@ class ServidorTESTE extends Thread {
         ////
         int vida = 3, danoRecente = 0, velocidade = 4, qtdeItemBota, qtdeItemBomba, qtdeItemExplosao;
         boolean boolDanoRecente = false, boolStunned = false, moveRight = false, moveLeft = false, moveDown = false, moveUp = false;
-        int estado = PARADO, X = 60, Y = 40, maxBombas = 2, bombaSize = 1;
+        int estado = PARADO, X=250, Y=250, maxBombas = 2, bombaSize = 1;
         int id = 0;
         //// alteração socket
         Socket playerSocket;
@@ -971,13 +971,26 @@ class ServidorTESTE extends Thread {
                 this.streamRecebeDoCliente = new DataInputStream(socketRecebido.getInputStream());
                 this.streamEnviaAoCliente = new DataOutputStream(socketRecebido.getOutputStream());
                 this.id = id;
-                this.threadEnvia = new PlayerThreadEnvia(streamEnviaAoCliente);
-                this.threadRecebe = new PlayerThreadRecebe(streamRecebeDoCliente);
+                this.threadEnvia = new PlayerThreadEnvia(streamEnviaAoCliente, id);
+                this.threadRecebe = new PlayerThreadRecebe(streamRecebeDoCliente, id);
 
-                System.out.println("Player"+id+" run");
                 streamEnviaAoCliente.writeUTF(Integer.toString(id));
                 streamEnviaAoCliente.flush();
-                System.out.println("Player"+id+" Trocando Dados = true");
+                System.out.println("Player"+id+" run");
+
+                do{ // recebe a posicao inicial
+                    leitura = streamRecebeDoCliente.readUTF();
+                }while(!leitura.startsWith("POSINIC"));
+
+                leituraPartes = leitura.split(" ");
+                this.X = Integer.parseInt(leituraPartes[2]);
+                this.Y = Integer.parseInt(leituraPartes[3]);
+                this.estado = Integer.parseInt(leituraPartes[4]);
+                //recebe ("POSINIC "+id+" "+ arrayPlayers[id - 1].X + " " + arrayPlayers[id - 1].Y + " " + arrayPlayers[id - 1].estado)
+                streamEnviaAoCliente.writeUTF("PosAcc");
+                streamEnviaAoCliente.flush();
+                System.out.println("Player"+id+" posicionado");
+
                 threadEnvia.start();
                 threadRecebe.start();
             } catch (Exception erroPlayer) {
@@ -987,48 +1000,51 @@ class ServidorTESTE extends Thread {
 
         class PlayerThreadEnvia extends Thread{
             DataOutputStream os;
+            int id;
 
-            public PlayerThreadEnvia(DataOutputStream os){
+            public PlayerThreadEnvia(DataOutputStream os, int id){
+                this.id = id;
                 this.os = os;
             }
 
             public void run(){
                 try {
-                    System.out.println("Player"+id+" run");
+                    System.out.println("ThreadPlayer"+id+" ENVIA: start");
                     os.writeUTF(Integer.toString(id));
                     os.flush();
-                    System.out.println("Player"+id+" Trocando Dados = true");
+                    System.out.println("ThreadPlayer"+id+" ENVIA: ID ENVIADA");
 
+                    while(!boolIniciaJogo){
+                        System.out.println("ThreadPlayer"+id+" ENVIA: While SEGURA Thread");
+                        sleep(25);
+                    }//While para segurar a thread
+                    System.out.println("ThreadPlayer"+id+" ENVIA: Passou While SEGURA Thread");
 
                     while(true){
-                        sleep(3000);
-                        System.out.println("Player"+id+" entrou no while true");
-                        while(!boolIniciaJogo){
-                            System.out.println("Player"+id+" preso no while iniciajogo");
-                            sleep(1000);
-                        }//While para segurar a thread
-                        sleep(1000);
-                        System.out.println("Player"+id+" running");
+                        sleep(25);
+                        System.out.println("ThreadPlayer"+id+" ENVIA: (While true)");
 
                         if(!boolTrocandoDados)
                             boolTrocandoDados = true;
 
-                        //envia ao cliente posicoes
-                        if(id == 1){ //se o id for 1, envia a pos do player2 ao cliente
-                            os.writeUTF("POS "+"2 "+threadPlayer2.X+" "+threadPlayer2.Y+" "+threadPlayer2.estado);
-                            os.flush();
-                        } else { //se o id for 2, envia a pos do player 1 ao cliente
-                            os.writeUTF("POS "+"1 "+threadPlayer1.X+" "+threadPlayer1.Y+" "+threadPlayer1.estado);
-                            os.flush();
-                        }
-                        System.out.println("Envia Bomba");
+//                        //envia ao cliente posicoes
+//                        if(id == 1){ //se o id for 1, envia a pos do player2 ao cliente
+//                            os.writeUTF("POS "+"2 "+threadPlayer2.X+" "+threadPlayer2.Y+" "+threadPlayer2.estado);
+//                            os.flush();
+//                            System.out.println("ThreadPlayer"+id+" ENVIA: POS "+"2 "+threadPlayer2.X+" "+threadPlayer2.Y+" "+threadPlayer2.estado);
+//                        } else { //se o id for 2, envia a pos do player 1 ao cliente
+//                            os.writeUTF("POS "+"1 "+threadPlayer1.X+" "+threadPlayer1.Y+" "+threadPlayer1.estado);
+//                            os.flush();
+//                            System.out.println("ThreadPlayer"+id+" ENVIA: POS "+"1 "+threadPlayer1.X+" "+threadPlayer1.Y+" "+threadPlayer1.estado);
+//                        }
 
                         //envia ao cliente o array das bombas
                         if(!arrayBombas.isEmpty()){
                             for(int i=0 ; i<arrayBombas.size() ; i++){
                                 os.writeUTF("BOM "+arrayBombas.get(i).dono+" "+arrayBombas.get(i).x+" "+arrayBombas.get(i).y+" "+arrayBombas.get(i).indexImage+" "+arrayBombas);
                                 os.flush();
-                             }
+                                System.out.println("ThreadPlayer"+id+" Envia: arrayBombas");
+                            }
                         }
                     }
                 }
@@ -1039,6 +1055,7 @@ class ServidorTESTE extends Thread {
 
                 try {
                     os.close();
+                    System.out.println("ThreadPlayer"+id+" Envia: OutputStream CLOSED");
                 }
                 catch (IOException e1) {
                     e1.printStackTrace();
@@ -1049,9 +1066,10 @@ class ServidorTESTE extends Thread {
 
         class PlayerThreadRecebe extends Thread{
             DataInputStream is;
-            int auxID;
+            int auxID, id;
 
-            public PlayerThreadRecebe (DataInputStream is){
+            public PlayerThreadRecebe (DataInputStream is, int id){
+                this.id = id;
                 this.is = is;
             }
 
@@ -1059,33 +1077,41 @@ class ServidorTESTE extends Thread {
                 try {
                     /// RECEBIMENDO DOS DADOS DO CLIENTE
                     while (true) {
-                        System.out.println("Antes da leitura: player" + id);
+                        //System.out.println("Player"+id+" Antes da leitura");
                         leitura = is.readUTF();
-                        System.out.println("Leitura player" + id + " = " + leitura);
+                        System.out.println("ThreadPlayer"+id+" Leitura = " + leitura);
                         leituraPartes = leitura.split(" ");
-                        System.out.println("Leitura[0] player" + id + " = " + leituraPartes[0]);
+                        //System.out.println("Player"+id+" Leitura[0] = " + leituraPartes[0]);
                         switch (leituraPartes[0]) {
                             case "POS":
+                                System.out.println("ThreadPlayer"+id+" RECEBEU POS ["+leitura+"]");
                                 auxID = Integer.parseInt(leituraPartes[2]);
-                                if(auxID != threadPlayer1.id){
+                                System.out.println("ThreadPlayer"+id+" auauauauau");
+                                if(auxID == 1){
+                                    threadPlayer2.streamEnviaAoCliente.writeUTF(leitura);
+                                    threadPlayer2.streamEnviaAoCliente.flush();
                                     threadPlayer2.X = Integer.parseInt(leituraPartes[1]);
                                     threadPlayer2.Y = Integer.parseInt(leituraPartes[2]);
                                     threadPlayer2.estado = Integer.parseInt(leituraPartes[3]);
-                                    //recebe:("POS "+arrayPlayers[0].getX()+" "+arrayPlayers[0].getY()+" "+arrayPlayers[0].estado)
+                                    //recebe:("POS "+id+" "+arrayPlayers[0].getX()+" "+arrayPlayers[0].getY()+" "+arrayPlayers[0].estado)
                                 } else {
+                                    threadPlayer1.streamEnviaAoCliente.writeUTF(leitura);
+                                    threadPlayer1.streamEnviaAoCliente.flush();
                                     threadPlayer1.X = Integer.parseInt(leituraPartes[1]);
                                     threadPlayer1.Y = Integer.parseInt(leituraPartes[2]);
                                     threadPlayer1.estado = Integer.parseInt(leituraPartes[3]);
                                     //recebe:("POS "+arrayPlayers[0].getX()+" "+arrayPlayers[0].getY()+" "+arrayPlayers[0].estado)
                                 }
+                                System.out.println("caraio eita caraio");
                                 break;
                             case "BOM":
+                                System.out.println("ThreadPlayer"+id+" RECEBEU BOM ["+leitura+"]");
                                 bombasAtivas++;
                                 arrayBombas.add(new Bomba(Integer.parseInt(leituraPartes[1]), Integer.parseInt(leituraPartes[2]), Integer.parseInt(leituraPartes[3])));
                                 //recebe:("BOM "+arrayPlayers[id-1].getX()+" "+arrayPlayers[id-1].getY()+" "+arrayPlayers[id-1].bombaSize)
                                 break;
                             case "EXP":
-
+                                System.out.println("ThreadPlayer"+id+" RECEBEU EXP = " + leitura);
                                 break;
                         }
                     }
@@ -1098,6 +1124,8 @@ class ServidorTESTE extends Thread {
                 try {
                     is.close();
                     playerSocket.close();
+                    System.out.println("ThreadPlayer"+id+" Envia: InputStream CLOSED");
+                    System.out.println("ThreadPlayer"+id+" SOCKET CLOSED");
                 }
                 catch (IOException e1) {
                     e1.printStackTrace();
