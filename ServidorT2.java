@@ -26,11 +26,12 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.util.Scanner;
 
-class ServidorTESTE extends Thread {
+class ServidorT2 extends Thread {
+    ArrayList<Rectangle> arrayBlocosQuebraveis;
+    Rectangle[] blocosFixos;
     //// DADOS DE CONEXÃO
     int PORTO = 12345;
     ServerSocket serverSocket = null;
-    //Socket arrayPlayerSockets[] = new Socket[2];
     Socket socketPlayer0, socketPlayer1;
     //// DADOS PLAYER
     final int PERS1 = 1, PERS2 = 2;
@@ -43,24 +44,6 @@ class ServidorTESTE extends Thread {
             DANIFICADO = 5, LENGTH_IMAGENS_PLAYER = 6;
     String nome_do_Player, score_do_Player = null;
 
-    //// DADOS INIMIGO
-    String morcegoDireita = "morcegoDireita", morcegoEsquerda = "morcegoEsquerda", morcegoCima = "morcegoCima",
-            morcegoBaixo = "morcegoBaixo";
-    String cavaleiroBaixo = "cavaleiroBaixo", cavaleiroCima = "cavaleiroCima", cavaleiroDireita = "cavaleiroDireita",
-            cavaleiroEsquerda = "cavaleiroEsquerda";
-    String magoDireita = "magoDireita", magoEsquerda = "magoEsquerda", magoCima = "magoCima", magoBaixo = "magoBaixo";
-    String andarilhoDireita = "andarilhoDireita", andarilhoEsquerda = "andarilhoEsquerda",
-            andarilhoCima = "andarilhoCima", andarilhoBaixo = "andarilhoBaixo";
-    String elfoDireita = "elfoDireita", elfoEsquerda = "elfoEsquerda", elfoCima = "elfoCima", elfoBaixo = "elfoBaixo";
-    String bauDireita = "bauDireita", bauEsquerda = "bauEsquerda", bauCima = "bauCima", bauBaixo = "bauBaixo";
-    String bruxaDireita = "bruxaDireita", bruxaEsquerda = "bruxaEsquerda", bruxaCima = "bruxaCima",
-            bruxaBaixo = "bruxaBaixo";
-    String jenovaDireita = "jenovaDireita", jenovaEsquerda = "jenovaEsquerda", jenovaCima = "jenovaCima",
-            jenovaBaixo = "jenovaBaixo";
-    String verdeDireita = "verdeDireita", verdeEsquerda = "verdeEsquerda", verdeBaixo = "verdeBaixo",
-            verdeCima = "verdeCima";
-    final int HORIZONTAL = 0, VERTICAL = 1, HORIZONTAL_VERTICAL = 2;
-
     //// DADOS ITENS
     ArrayList<Itens> arrayItens = new ArrayList<>(2);
     final int ITEM_BOTA = 0, ITEM_TAMANHOEXPLOSAO = 1, ITEM_QTDEBOMBAS = 2, ITEM_VIDA = 3;
@@ -72,7 +55,7 @@ class ServidorTESTE extends Thread {
 
     //// DADOS GERAIS
     final int TEMPO_DA_FASE = 150;
-    boolean boolGameOver = false, boolLastBombaBlockPlayer = false, boolLastBombaBlockInimigo;
+    boolean boolGameOver = false, boolLastBombaBlockPlayer = false;
     float tempoCont;
     Timer tempo;
     //// DADOS DAS FASES
@@ -82,7 +65,7 @@ class ServidorTESTE extends Thread {
 
     //////////////////////////////////////////////////////
 
-    Timer refreshModels = new Timer(25, e -> {
+    Timer refreshModels = new Timer(500, e -> {
         int i;
         try {
             //// Atualiza a imagem dos itens
@@ -94,13 +77,6 @@ class ServidorTESTE extends Thread {
             if (arrayBombas.size() > 0) {
                 for (i = 0; i < arrayBombas.size(); i++) {
                     arrayBombas.get(i).indexImage++;
-                }
-            }
-
-            //// Movimenta os inimigos
-            if (mult.arrayInimigos.size() > 0) {
-                for (i = 0; i < mult.arrayInimigos.size(); i++) {
-                    mult.arrayInimigos.get(i).move();
                 }
             }
 
@@ -120,23 +96,53 @@ class ServidorTESTE extends Thread {
                 }
             }
 
-            // Checa as bombas recém colocadas e quando elas irão bloquear os inimigos (NPC)
-            if (boolLastBombaBlockInimigo) {
-                if (!arrayBombas.isEmpty()) {
-                    for (i = 0; i < arrayBombas.size(); i++) {
-                        for (int j = 0; j < mult.arrayInimigos.size(); j++) {
-                            if (new Rectangle(mult.arrayInimigos.get(j).x, mult.arrayInimigos.get(j).y, 49, 49)
-                                    .intersects(arrayBombas.get(i).getHitBox())) {
-                                arrayBombas.get(i).boolBloqueandoInimigo = false;
-                                boolLastBombaBlockInimigo = true;
-                                break;
-                            } else {
-                                arrayBombas.get(i).boolBloqueandoInimigo = true;
-                                boolLastBombaBlockInimigo = false;
-                            }
+            System.out.println("UM");
+            /// EXPLODE AS BOMBAS
+            if(arrayBombas.size()>0){
+                for(i = 0; i < arrayBombas.size(); i++){
+                    if(arrayBombas.get(i).indexImage==99) {
+                        funcExplodeBomba(arrayBombas.get(i));
+                        arrayBombas.remove(arrayBombas.get(i));
+                        if(arrayBombas.isEmpty())
+                            break;
+                    }
+                }
+            }
+
+            System.out.println("DOIS");
+            /// CALCULO DAS EXPLOSOES
+            if(arrayExplosao.size()>0){
+                for(i = 0; i < arrayExplosao.size(); i++){
+
+                    System.out.println("AA");
+                    //Checa colisao explosao com outra bomba
+                    for(int j=0; j < arrayBombas.size();j++){
+                        if(arrayExplosao.get(i).hitBox.intersects(arrayBombas.get(j).getHitBox())){
+                            funcExplodeBomba(arrayBombas.get(j));
+                            arrayBombas.remove(j);
                         }
+                        if (arrayBombas.isEmpty())
+                            break;
+                    }
+                    System.out.println("BB");
+                    // Checa colisao da explosao com os players
+                    if(!threadPlayer0.boolDanoRecente && arrayExplosao.get(i).hitBox.intersects(threadPlayer0.getHitBox())) {
+                        threadPlayer0.danificado();
+                    }
+                    if(!threadPlayer1.boolDanoRecente && arrayExplosao.get(i).hitBox.intersects(threadPlayer1.getHitBox())) {
+                        threadPlayer1.danificado();
                     }
 
+                    arrayExplosao.get(i).holdDraw--;
+
+                    if(arrayExplosao.get(i).holdDraw<0){ //Checa a colisao da explosão com os blocos quebraveis
+                        for(int j=0; j<arrayBlocosQuebraveis.size();j++){
+                            if((arrayExplosao.get(i).hitBox.intersects(arrayBlocosQuebraveis.get(j)))){
+                                arrayBlocosQuebraveis.remove(j); // Remove os blocos quebraveis
+                            }
+                        }
+                        arrayExplosao.remove(i);
+                    }
                 }
             }
 
@@ -144,19 +150,6 @@ class ServidorTESTE extends Thread {
             System.out.println("Erro no refreshModels: " + eRef);
         }
     });
-
-    void checkPlayerEnemyColision() {
-        for (int i = 0; i < mult.arrayInimigos.size(); i++) {
-            if (threadPlayer0 != null && !threadPlayer0.boolDanoRecente && threadPlayer0.getHitBox().intersects(mult.arrayInimigos.get(i).getBounds())) {
-                threadPlayer0.danificado();
-        }
-            if (threadPlayer1 != null && !threadPlayer1.boolDanoRecente && threadPlayer1.getHitBox().intersects(mult.arrayInimigos.get(i).getBounds())) {
-                threadPlayer1.danificado();
-            }
-            if (mult.arrayInimigos.isEmpty())
-                break;
-        }
-    }
 
     void damageDelayControl() {
         if (threadPlayer0 != null && threadPlayer0.boolDanoRecente) {
@@ -237,7 +230,6 @@ class ServidorTESTE extends Thread {
 
     class FaseMultiplayer extends JPanel {
         ArrayList<Rectangle> arrayBlocosQuebraveis;
-        ArrayList<Inimigo> arrayInimigos;
         Rectangle[] blocosFixos;
         Rectangle colisaoPorta = new Rectangle(450, 300, 55, 55);
         final int FUNDO = 0, BLOCO = 1, BLOCOQUEBRAVEL = 2, MARGEM_CE = 3, MARGEM_C = 4, MARGEM_CD = 5, MARGEM_E = 6,
@@ -250,7 +242,6 @@ class ServidorTESTE extends Thread {
                     funcAdcBlocosFixos(MULTIPLAYER1);
                     funcAdcBlocosQuebraveis(MULTIPLAYER1);
                     funcAdcItens(1, 2, 2, 1);
-                    funcAdcInimigos(MULTIPLAYER1);
                 } else {
                     //MULTIPLAYER2 MULTIPLAYER3 MULTIPLAYER4
                 }
@@ -562,38 +553,6 @@ class ServidorTESTE extends Thread {
         }
     }
 
-        void funcAdcInimigos(int mult) {
-        try {
-            arrayInimigos = new ArrayList<>(10);
-            if (mult == MULTIPLAYER1) {
-
-            } else if (mult == MULTIPLAYER2) {
-                arrayInimigos.add(new Inimigo(400, 50, 2, HORIZONTAL, morcegoDireita, morcegoEsquerda));
-                arrayInimigos.add(new Inimigo(850, 300, 2, VERTICAL, morcegoCima, morcegoBaixo));
-                arrayInimigos.add(new Inimigo(250, 250, 2, HORIZONTAL, magoDireita, magoEsquerda));
-                arrayInimigos.add(new Inimigo(250, 50, 1, HORIZONTAL, cavaleiroDireita, cavaleiroEsquerda));
-                arrayInimigos.add(new Inimigo(750, 250, 2, VERTICAL, magoCima, magoBaixo));
-                arrayInimigos.add(new Inimigo(450, 250, 1, VERTICAL, cavaleiroCima, cavaleiroBaixo));
-            } else if (mult == MULTIPLAYER3) {
-                arrayInimigos.add(new Inimigo(550, 550, 2, HORIZONTAL, bauDireita, bauEsquerda));
-                arrayInimigos.add(new Inimigo(250, 250, 2, VERTICAL, bauCima, bauBaixo));
-                arrayInimigos.add(new Inimigo(200, 50, 2, HORIZONTAL, jenovaDireita, jenovaEsquerda));
-                arrayInimigos.add(new Inimigo(550, 450, 2, VERTICAL, jenovaCima, jenovaBaixo));
-                arrayInimigos.add(new Inimigo(150, 150, 2, HORIZONTAL, bruxaDireita, bruxaEsquerda));
-                arrayInimigos.add(new Inimigo(650, 150, 2, VERTICAL, bruxaCima, bruxaBaixo));
-            } else if (mult == MULTIPLAYER4) {
-                arrayInimigos.add(new Inimigo(300, 550, 2, HORIZONTAL, verdeDireita, verdeEsquerda));
-                arrayInimigos.add(new Inimigo(650, 250, 2, VERTICAL, verdeCima, verdeBaixo));
-                arrayInimigos.add(new Inimigo(200, 450, 2, HORIZONTAL, elfoDireita, elfoEsquerda));
-                arrayInimigos.add(new Inimigo(550, 450, 2, VERTICAL, elfoCima, elfoBaixo));
-                arrayInimigos.add(new Inimigo(150, 150, 2, HORIZONTAL, andarilhoDireita, andarilhoEsquerda));
-                arrayInimigos.add(new Inimigo(850, 150, 2, VERTICAL, andarilhoCima, andarilhoBaixo));
-            }
-        } catch (Exception e) {
-            System.out.println("Erro Adc Inimigos: " + e);
-        }
-    }
-
       boolean funcChecaPosItens(int valor, int[] arrayDosItens) { // Serve para não repetir itens na mesma posição
             for (int arrayDosIten : arrayDosItens) {
                 if (valor == arrayDosIten) {
@@ -607,14 +566,6 @@ class ServidorTESTE extends Thread {
     boolean intersBombas(Rectangle checkR) { // Movimentação player vs bomba
         for (Bomba bombaBlock : arrayBombas) {
             if (bombaBlock.boolBloqueandoPlayer && checkR.intersects(bombaBlock.getHitBox()))
-                return false;
-        }
-        return true;
-    }
-
-    boolean intersBombasInimigos(Rectangle checkR) { // Movimentação inimigos vs bomba
-        for (Bomba bombaBlock : arrayBombas) {
-            if (bombaBlock.boolBloqueandoInimigo && checkR.intersects(bombaBlock.getHitBox()))
                 return false;
         }
         return true;
@@ -642,28 +593,6 @@ class ServidorTESTE extends Thread {
         for (Rectangle arrayBlocosQuebravei : arrayBlocosQuebraveis) {
             if (checkR.intersects(arrayBlocosQuebravei)) {
                 return false;
-            }
-        }
-        return true;
-    }
-
-    boolean inimigoIntersX(Rectangle checkR, ArrayList<Rectangle> arrayBlocosQuebraveis) { // Retorna TRUE se não há colisão
-        for (Rectangle arrayBlocosQuebravei : arrayBlocosQuebraveis) {
-            if (arrayBlocosQuebravei.getY() == checkR.getY()) {
-                if (arrayBlocosQuebravei.intersects(checkR) && arrayBlocosQuebravei.intersects(checkR)) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    boolean inimigoIntersY(Rectangle checkR, ArrayList<Rectangle> arrayBlocosQuebraveis) { // Retorna TRUE se não há colisão
-        for (Rectangle arrayBlocosQuebravei : arrayBlocosQuebraveis) {
-            if (arrayBlocosQuebravei.getX() == checkR.getX()) {
-                if (arrayBlocosQuebravei.intersects(checkR) && arrayBlocosQuebravei.intersects(checkR)) {
-                    return false;
-                }
             }
         }
         return true;
@@ -708,6 +637,10 @@ class ServidorTESTE extends Thread {
                 break;
             }
         }
+        if(bomba.dono == 0)
+            threadPlayer0.bombasAtivas--;
+        else
+            threadPlayer1.bombasAtivas--;
     }
 
     static class pontoBomba extends Point {
@@ -730,14 +663,13 @@ class ServidorTESTE extends Thread {
         int x, y, valorBombaSize, indexImage = 0, dono;
         Image[] arrayImagensBomba;
         Rectangle hitBox;
-        boolean boolBloqueandoPlayer = false, boolBloqueandoInimigo = false;
+        boolean boolBloqueandoPlayer = false;
 
         Bomba(int x, int y, int bombaSize) {
             carregaImagens();
             valorBombaSize = bombaSize;
             // Setar o bombaY no centro dos espaços
-            if (y < 310) { // Divisão do Y na metade para possivelmente acelerar a chegada do if
-                           // correspondente, como uma busca binária no início
+            if (y < 310) { // Divisão do Y na metade para possivelmente acelerar a chegada do if correspondente, como uma busca binária no início
                 if (y >= 25 && y <= 60)
                     this.y = 50;
                 else if (y <= 110)
@@ -750,7 +682,8 @@ class ServidorTESTE extends Thread {
                     this.y = 250;
                 else
                     this.y = 300;
-            } else {
+            }
+            else {
                 if (y <= 360)
                     this.y = 350;
                 else if (y <= 410)
@@ -763,8 +696,7 @@ class ServidorTESTE extends Thread {
                     this.y = 550;
             }
             // Setar o bombaX no centro dos espaços
-            if (x <= 535) { // Divisão do X na metade para possivelmente acelerar a chegada do if
-                            // correspondente, como uma busca binária no início
+            if (x <= 535) { // Divisão do X na metade para possivelmente acelerar a chegada do if correspondente, como uma busca binária no início
                 if (x <= 85)
                     this.x = 50;
                 else if (x <= 135)
@@ -785,7 +717,8 @@ class ServidorTESTE extends Thread {
                     this.x = 450;
                 else
                     this.x = 500;
-            } else {
+            }
+            else {
                 if (x <= 585)
                     this.x = 550;
                 else if (x <= 635)
@@ -802,7 +735,7 @@ class ServidorTESTE extends Thread {
                     this.x = 850;
             }
             hitBox = new Rectangle(this.x + 12, this.y + 12, 26, 26);
-            boolLastBombaBlockPlayer = boolLastBombaBlockInimigo = true;
+            boolLastBombaBlockPlayer = true;
         }
 
         public Rectangle getHitBox() {
@@ -819,96 +752,13 @@ class ServidorTESTE extends Thread {
 
         void carregaImagens() {
             try {
-                arrayImagensBomba = new Image[21];
-                for (int i = 0; i < 20; i++) {
+                arrayImagensBomba = new Image[22];
+                for (int i = 0; i <= 21; i++) {
                     arrayImagensBomba[i] = (new ImageIcon("Resources/Frames/bomb" + i + ".png").getImage());
                 }
             } catch (Exception b) {
                 System.out.println("Erro bomba: " + b);
             }
-        }
-    }
-
-    class Inimigo {
-        final int HORIZONTAL = 0;
-        int x, y, sentido;
-        Image inimigo;
-        ImageIcon direita;
-        ImageIcon esquerda;
-        ImageIcon cima;
-        ImageIcon baixo;
-        int velocidade;
-        boolean inverteMovimento = false;
-
-        Inimigo(int xInicial, int yInicial, int valorVelocidade, int valorSentido, String gifInimigo1,
-                String gifInimigo2) {
-            x = xInicial;
-            y = yInicial;
-            if (valorSentido == HORIZONTAL) {
-                direita = new ImageIcon("Resources//Enemies//" + gifInimigo1 + ".gif");
-                esquerda = new ImageIcon("Resources//Enemies//" + gifInimigo2 + ".gif");
-            } else if (valorSentido == VERTICAL) {
-                cima = new ImageIcon("Resources//Enemies//" + gifInimigo1 + ".gif");
-                baixo = new ImageIcon("Resources//Enemies//" + gifInimigo2 + ".gif");
-            } else if (valorSentido == HORIZONTAL_VERTICAL) {
-                direita = new ImageIcon("Resources//Enemies//" + gifInimigo1 + "Direita" + ".gif");
-                esquerda = new ImageIcon("Resources//Enemies//" + gifInimigo2 + "Esquerda" + ".gif");
-                cima = new ImageIcon("Resources//Enemies//" + gifInimigo1 + "Cima" + ".gif");
-                baixo = new ImageIcon("Resources//Enemies//" + gifInimigo2 + "Baixo" + ".gif");
-            }
-            this.velocidade = valorVelocidade;
-            this.sentido = valorSentido;
-        }
-
-        void move() {
-            int XdaBomba;
-            if (sentido == HORIZONTAL) {
-                // DIREITA, INVERTEMOVIMENTO = FALSE
-                if (x <= 850 && !inverteMovimento
-                        && inimigoIntersX(new Rectangle(x + velocidade, y, 40, 40), mult.arrayBlocosQuebraveis)
-                        && intersBombasInimigos(new Rectangle(x + velocidade, y, 40, 40))) {
-                    inimigo = direita.getImage();
-                    x += velocidade;
-                } else {
-                    inverteMovimento = true;
-                }
-                // ESQUERDA, INVERTEMOVIMENTO = TRUE
-                if (x >= 50 && inverteMovimento
-                        && inimigoIntersX(new Rectangle(x - velocidade, y, 40, 40), mult.arrayBlocosQuebraveis)
-                        && intersBombasInimigos(new Rectangle(x - velocidade, y, 40, 40))) {
-                    inimigo = esquerda.getImage();
-                    x -= velocidade;
-                } else {
-                    inverteMovimento = false;
-                }
-            } else { // SENTIDO VERTICAL
-                // PARA BAIXO, INVERTEMOVIMENTO = FALSO
-                if (y <= 550 && !inverteMovimento
-                        && inimigoIntersY(new Rectangle(x, y + velocidade, 40, 40), mult.arrayBlocosQuebraveis)
-                        && intersBombasInimigos(new Rectangle(x, y + velocidade, 40, 40))) {
-                    inimigo = baixo.getImage();
-                    y += velocidade;
-                } else {
-                    inverteMovimento = true;
-                }
-                // PARA CIMA, INVERTEMOVIMENTO = TRUE
-                if (y >= 50 && inverteMovimento
-                        && inimigoIntersY(new Rectangle(x, y - velocidade, 40, 40), mult.arrayBlocosQuebraveis)
-                        && intersBombasInimigos(new Rectangle(x, y - velocidade, 40, 40))) {
-                    inimigo = cima.getImage();
-                    y -= velocidade;
-                } else {
-                    inverteMovimento = false;
-                }
-            }
-        }
-
-        public Image getImage() {
-            return inimigo;
-        }
-
-        public Rectangle getBounds() {
-            return new Rectangle(x, y, 31, 47);
         }
     }
 
@@ -986,6 +836,7 @@ class ServidorTESTE extends Thread {
             }
         }
 
+
         class PlayerThreadEnvia extends Thread{
             DataOutputStream os;
             int id;
@@ -1028,11 +879,25 @@ class ServidorTESTE extends Thread {
                         //envia ao cliente o array das bombas
                         if(!arrayBombas.isEmpty()){
                             for(int i=0 ; i<arrayBombas.size() ; i++){
-                                os.writeUTF("BOM "+arrayBombas.get(i).dono+" "+arrayBombas.get(i).x+" "+arrayBombas.get(i).y+" "+arrayBombas.get(i).indexImage+" "+arrayBombas);
+                                os.writeUTF("BOM "+arrayBombas.get(i).x+" "+arrayBombas.get(i).y+" "+arrayBombas.get(i).indexImage);
                                 os.flush();
                                 System.out.println("ThreadPlayer"+id+" Envia: arrayBombas");
+                                if(arrayBombas.isEmpty())
+                                    break;
                             }
                         }
+
+                        //envia ao cliente o array das bombas
+                        if(!arrayExplosao.isEmpty()){
+                            for(int i=0 ; i<arrayExplosao.size() ; i++){
+                                os.writeUTF("EXP "+arrayExplosao.get(i).x+" "+arrayExplosao.get(i).y+" "+arrayExplosao.get(i).tipoDeAnimacao);
+                                os.flush();
+                                System.out.println("ThreadPlayer"+id+" Envia: arrayBombas");
+                                if(arrayExplosao.isEmpty())
+                                    break;
+                            }
+                        }
+
                         sleep(25);
                     }
                 }
@@ -1088,9 +953,11 @@ class ServidorTESTE extends Thread {
                                 break;
                             case "BOM":
                                 System.out.println("ThreadPlayer"+id+" RECEBEU ["+leitura+"]");
-                                bombasAtivas++;
-                                arrayBombas.add(new Bomba(Integer.parseInt(leituraPartes[1]), Integer.parseInt(leituraPartes[2]), Integer.parseInt(leituraPartes[3])));
-                                //recebe:("BOM "+arrayPlayers[id-1].getX()+" "+arrayPlayers[id-1].getY()+" "+arrayPlayers[id-1].bombaSize)
+                                if(bombasAtivas<maxBombas){
+                                    bombasAtivas++;
+                                    arrayBombas.add(new Bomba(Integer.parseInt(leituraPartes[1]), Integer.parseInt(leituraPartes[2]), Integer.parseInt(leituraPartes[3])));
+                                    //recebe:("BOM "+arrayPlayers[id-1].getX()+" "+arrayPlayers[id-1].getY()+" "+arrayPlayers[id-1].bombaSize)
+                                }
                                 break;
                             case "EXP":
                                 System.out.println("ThreadPlayer"+id+" RECEBEU EXP = " + leitura);
@@ -1142,8 +1009,99 @@ class ServidorTESTE extends Thread {
 
     }
 
-    ServidorTESTE() {
+    void funcAdcBlocosFixos(){
+        try {
+            blocosFixos = new Rectangle[40];
+            int i, j, index = 0;
+            for (i = 100; i <= 800; i += 100) {
+                for (j = 100; j <= 500; j += 100) {
+                    blocosFixos[index++] = new Rectangle(i, j, 50, 50);
+                }
+            }
+        }catch (Exception e){
+            System.out.println("Erro Blocos Fixos: "+e);
+        }
+    }
+
+    void funcAdcBlocosQuebraveis(){ //Cria o array dos blocos quebráveis da Fase 1
+        try {
+            arrayBlocosQuebraveis = new ArrayList<>(60);
+            int y;
+            y = 50; //LINHA 1
+            arrayBlocosQuebraveis.add(new Rectangle(200, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(600, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(700, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
+            y = 100; //LINHA 2
+            arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
+            y = 150; //LINHA 3
+            arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(200, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(500, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
+            y = 200; //LINHA 4
+            arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
+            y = 250; //LINHA 5
+            arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(200, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(800, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
+            y = 300; //LINHA 6
+            arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
+            y = 350; //LINHA 7
+            arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(500, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(800, y, 50, 50));
+            y = 400; //LINHA 8
+            arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
+            y = 450; //LINHA 9
+            arrayBlocosQuebraveis.add(new Rectangle(150, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(200, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(400, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(600, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(800, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(850, y, 50, 50));
+            y = 500; //LINHA 10
+            arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(750, y, 50, 50));
+            y = 550; //LINHA 11
+            arrayBlocosQuebraveis.add(new Rectangle(50, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(250, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(300, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(350, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(450, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(550, y, 50, 50));
+            arrayBlocosQuebraveis.add(new Rectangle(650, y, 50, 50));
+
+        }catch (Exception e){
+            System.out.println("Erro Blocos Quebraveis: "+e);
+        }
+    }
+
+    ServidorT2() {
         try{
+            funcAdcBlocosFixos();
+            funcAdcBlocosQuebraveis();
             serverSocket = new ServerSocket(PORTO);
 
             // CONEXÃO 1
@@ -1173,7 +1131,7 @@ class ServidorTESTE extends Thread {
             System.out.println("Erro na conexao 2. - "+e);
             System.exit(1);
         }
-
+        refreshModels.start();
         desbloqueiaThreads();
 }
 
@@ -1185,6 +1143,6 @@ class ServidorTESTE extends Thread {
     }
 
     static public void main(String[] args) throws InterruptedException {
-        new ServidorTESTE();
+        new ServidorT2();
     }
 }

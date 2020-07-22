@@ -18,7 +18,8 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Random;
 
-class ClienteTESTE extends JFrame {
+class ClienteT2 extends JFrame {
+    Image[] arrayImagensBomba = new Image[21];
     /// Rede
     Rede rede;
     boolean boolJogoComecou = false, boolJogoRodando = false;
@@ -44,7 +45,7 @@ class ClienteTESTE extends JFrame {
 
     //// DADOS BOMBAS
     ArrayList<Bomba> arrayBombas = new ArrayList<Bomba>(10);
-    ArrayList<pontoBomba> arrayExplosao = new ArrayList<pontoBomba>(20); //Fogo da explosão da bomba
+    ArrayList<pontoExplosao> arrayExplosao = new ArrayList<pontoExplosao>(100); //Fogo da explosão da bomba
 
 
     //// DADOS GERAIS
@@ -320,79 +321,32 @@ class ClienteTESTE extends JFrame {
                 }
                 //System.out.println("draw a");
                 /// DESENHA AS BOMBAS
-                /*if(!arrayBombas.isEmpty()){
+                if(!arrayBombas.isEmpty()){
                     System.out.println("a2");
-                    for(i = 0; i < arrayBombas.size(); i++){
+                    for(i = arrayBombas.size()-1; i >= 0 ; i--){
                         System.out.println("a3");
-                        g.drawImage(arrayBombas.get(i).arrayImagensBomba[arrayBombas.get(i).indexImage/5], arrayBombas.get(i).getX()+13, arrayBombas.get(i).getY()+13, 25 ,25, this);
+                        g.drawImage(arrayBombas.get(i).imageFrame, arrayBombas.get(i).x+13, arrayBombas.get(i).y+13, 25 ,25, this);
+                        arrayBombas.remove(i);
+                        if(arrayBombas.isEmpty()){
+                            break;
+                        }
                     }
-                }*/
-                //System.out.println("draw b");
+                }
+
                 /// DESENHA AS EXPLOSOES
-                /*if(!arrayExplosao.isEmpty()){
-                    for(i = 0; i < arrayExplosao.size(); i++){
+                if(!arrayExplosao.isEmpty()){
+                    for(i = arrayExplosao.size()-1; i >= 0 ; i--){
                         if (arrayExplosao.get(i).tipoDeAnimacao==0){
                             g.drawImage(explosao, arrayExplosao.get(i).x, arrayExplosao.get(i).y, this);
                         }
                         else{
                             g.drawImage(explosao2, arrayExplosao.get(i).x, arrayExplosao.get(i).y, this);
                         }
-
-                        //Checa colisao explosao com outra bomba
-                        for(int j=0; j < arrayBombas.size();j++){
-                            if(arrayExplosao.get(i).hitBox.intersects(arrayBombas.get(j).getHitBox())){
-                                funcExplodeBomba(arrayBombas.get(j));
-                                //sem a melhoria de remover apenas o ultimo
-                                arrayBombas.remove(j);
-                            }
-                            if (arrayBombas.isEmpty())
-                                break;
-                        }
-                        // Checa colisao da explosao com o player
-                        if(!arrayPlayers[id].boolDanoRecente && arrayExplosao.get(i).hitBox.intersects(arrayPlayers[id].getHitBox())) {
-                          //  currentPlayer.danificado();
-                        }
-                        if(multiplay){
-                            for (i = 0; i < 2; i++){
-                                if (arrayPlayers[i] != null && !arrayPlayers[i].boolDanoRecente && arrayExplosao.get(i).hitBox.intersects(arrayPlayers[i].getHitBox())){
-                                    arrayPlayers[i].danificado();
-                                    System.out.println("dano player " + i);
-                                }
-                        }
-                        /// Checa Colisao da explosao com o inimigo
-                        for (int j=0; j<arrayInimigos.size();j++) {
-                            if (arrayExplosao.get(i).hitBox.intersects(arrayInimigos.get(j).getBounds()) && arrayExplosao.get(i).holdDraw > 0){ // Checa colisao da bomba com o inimigo
-                                arrayInimigos.remove(j); // Remove o objeto inimigo do arrayInimigos (não será mais desenhado)
-                                //barraSuperior.scoreMonstro+=100;
-                                somaScore+=100;
-                                boolInimigoRemovido = true;
-                            }
-                            if(arrayInimigos.isEmpty()) {
-                                break;
-                            }
-                            else if (boolInimigoRemovido){
-                                j=0;
-                                boolInimigoRemovido = false;
-                            }
-                        }  
-                        arrayExplosao.get(i).holdDraw--;
-                        if(arrayExplosao.get(i).holdDraw<0){ //Checa a colisao da explosão com os blocos quebraveis
-                            for(int j=0; j<arrayBlocosQuebraveis.size();j++){
-                                if((arrayExplosao.get(i).hitBox.intersects(arrayBlocosQuebraveis.get(j)))){
-                                    arrayBlocosQuebraveis.remove(j); // Remove os blocos quebraveis
-                                    somaScore+=25;
-                                    labelScore.setText(String.valueOf(somaScore));
-                                }
-                            }
-                            ////////////////////////////////////remoçao de itens faltando
-                            arrayExplosao.remove(i);
-                        }
+                        arrayExplosao.remove(i);
+                        if(arrayExplosao.isEmpty())
+                            break;
                     }
                 }
-            }*/
-                //System.out.println("draw c");
-              
-                
                
                for (i = 0; i < 2; i++){
                     if (arrayPlayers[i].boolPosicaoValidada){
@@ -400,11 +354,6 @@ class ClienteTESTE extends JFrame {
                         g.drawRect(arrayPlayers[i].X, arrayPlayers[i].Y+15, 30, 35);
                     }
                 }
-
-                
-            
-
-             // Se for multiplayer
 
                 if(barraSuperior.valorTempo <= 0){
                     System.out.println("draw EMPATE?");
@@ -415,20 +364,14 @@ class ClienteTESTE extends JFrame {
                                 System.out.println("draw Player " + i + "morto");
                             }
                     }
-                   /* if (player1.getVida() <= 0) { // Condicao para morrer
-                        System.out.println("Player1 morto");
-                    }
-                    if (player2.getVida() <= 0) { // Condicao para morrer
-                        System.out.println("Player2 morto");
-                    }
-                    if (player3.getVida() <= 0) { // Condicao para morrer
-                        System.out.println("Player3 morto");
-                    }
-                    if (player4.getVida() <= 0) { // Condicao para morrer
-                        System.out.println("Player4 morto");
-                    } */
-                }
 
+//                   if (player1.getVida() <= 0) { // Condicao para morrer
+//                        System.out.println("Player1 morto");
+//                    }
+//                    if (player2.getVida() <= 0) { // Condicao para morrer
+//                        System.out.println("Player2 morto");
+//                    }
+                }
 
                 Toolkit.getDefaultToolkit().sync();
             } catch (Exception e){
@@ -502,83 +445,25 @@ class ClienteTESTE extends JFrame {
         return true;
     }
 
-    void funcExplodeBomba(Bomba bomba){
-        int expX = bomba.getX(), expY = bomba.getY();
-        arrayExplosao.add(new pontoBomba(expX, expY, 0));
-        for(int i = 0, fogoSobe = expY-50; fogoSobe>=50 && i<bomba.valorBombaSize && intersBlocosFixos(new Rectangle(expX, fogoSobe,50,50), mult.blocosFixos); fogoSobe-=50, i++){
-            if(intersBlocosQuebraveis((new Rectangle(expX,fogoSobe,50,50)), mult.arrayBlocosQuebraveis)){
-                arrayExplosao.add(new pontoBomba(expX, fogoSobe, 0));
-            } else {
-                arrayExplosao.add(new pontoBomba(expX, fogoSobe, 1));
-                break;
-            }
-        }
-        for(int i = 0, fogoDesce = expY+50; fogoDesce<=550 && i<bomba.valorBombaSize && intersBlocosFixos(new Rectangle(expX, fogoDesce,50,50), mult.blocosFixos); fogoDesce+=50, i++){
-            if(intersBlocosQuebraveis((new Rectangle(expX,fogoDesce,50,50)), mult.arrayBlocosQuebraveis)){
-                arrayExplosao.add(new pontoBomba(expX, fogoDesce, 0));
-            } else {
-                arrayExplosao.add(new pontoBomba(expX, fogoDesce, 1));
-                break;
-            }
-        }
-        for(int i = 0, fogoEsquerda = expX-50; fogoEsquerda>=50 && i<bomba.valorBombaSize && intersBlocosFixos(new Rectangle(fogoEsquerda, expY,50,50), mult.blocosFixos); fogoEsquerda-=50, i++){
-            if(intersBlocosQuebraveis((new Rectangle(fogoEsquerda,expY,50,50)), mult.arrayBlocosQuebraveis)){
-                arrayExplosao.add(new pontoBomba(fogoEsquerda, expY, 0));
-            } else {
-                arrayExplosao.add(new pontoBomba(fogoEsquerda, expY, 1));
-                break;
-            }
-        }
-        for(int i = 0, fogoDireita = expX+50; fogoDireita<=850 && i<bomba.valorBombaSize && intersBlocosFixos(new Rectangle(fogoDireita, expY,50,50), mult.blocosFixos); fogoDireita+=50, i++){
-            if(intersBlocosQuebraveis((new Rectangle(fogoDireita,expY,50,50)), mult.arrayBlocosQuebraveis)){
-                arrayExplosao.add(new pontoBomba(fogoDireita, expY, 0));
-            } else {
-                arrayExplosao.add(new pontoBomba(fogoDireita, expY, 1));
-                break;
-            }
-        }
-    }
-
-    static class pontoBomba extends Point{
-        int holdDraw; //int que será decrementado durante a chamada Draw pra garantir com que a imagem seja desenhada holdDraw vezes
-        int tipoDeAnimacao; //será 0 para a explosão normal e 1 para explosões que sobrepuserem os blocos quebráveis
-        Rectangle hitBox;
-        pontoBomba(int x, int y, int tipo){
-            this.x=x;
-            this.y=y;
-            hitBox = new Rectangle(x,y,50,50);
-            holdDraw=30;
-            tipoDeAnimacao = tipo;
-        }
-    }
-
     class Bomba{
-        int x, y,indexImage=0, dono, valorBombaSize;
-        Image[] arrayImagensBomba;
-        Rectangle hitBox;
+        int x, y, dono, valorBombaSize;
+        Image imageFrame;
         boolean boolBloqueandoPlayer = false;
 
-        public Rectangle getHitBox(){
-            return new Rectangle(this.x, this.y, 50,50);
+        Bomba(int x, int y, int indexImage) {
+            this.x = x;
+            this.y = y;
+            this.imageFrame = arrayImagensBomba[indexImage];
         }
+    }
 
-        public int getX(){
-            return this.x;
-        }
+    static class pontoExplosao extends Point {
+        int tipoDeAnimacao;
 
-        public int getY(){
-            return this.y;
-        }
-
-        void carregaImagens(){
-            try {
-                arrayImagensBomba = new Image[21];
-                for(int i=0;i<20;i++){
-                    arrayImagensBomba[i]= (new ImageIcon("Resources/Frames/bomb"+i+".png").getImage());
-                }
-            } catch (Exception b){
-                System.out.println("Erro bomba: "+b);
-            }
+        pontoExplosao(int x, int y, int tipo) {
+            this.x = x;
+            this.y = y;
+            tipoDeAnimacao = tipo;
         }
     }
 
@@ -1033,8 +918,8 @@ class ClienteTESTE extends JFrame {
         DataOutputStream streamEnviaAoServidor = null;
 
         boolean temDados = true;
-        ClienteTESTE jogo;
-        public Rede(ClienteTESTE jogo, String IP, int porto){
+        ClienteT2 jogo;
+        public Rede(ClienteT2 jogo, String IP, int porto){
             try {
                 this.jogo = jogo;
                 socket = new Socket(IP, porto);
@@ -1053,7 +938,7 @@ class ClienteTESTE extends JFrame {
         }
     }
 
-    ClienteTESTE(){
+    ClienteT2(){
         super("Bomb Your Way Out");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         getContentPane().setBackground(Color.black);
@@ -1063,6 +948,10 @@ class ClienteTESTE extends JFrame {
         add(menu);
         rede = new Rede(this, "127.0.0.1", 12345);
         RequestID(rede);
+
+        for(int i=0;i<20;i++){
+            arrayImagensBomba[i]= (new ImageIcon("Resources/Frames/bomb"+i+".png").getImage());
+        }
 
         System.out.println("ClienteTESTE 1");
         addKeyListener(new KeyAdapter() {
@@ -1081,6 +970,7 @@ class ClienteTESTE extends JFrame {
                     } else if (e.getKeyCode() == KeyEvent.VK_SPACE) {
                         try{
                             System.out.println("Botou bomba.");
+                            //if(arrayPlayers[id].maxBombas)
                             rede.streamEnviaAoServidor.writeUTF("BOM "+arrayPlayers[id].getX()+" "+arrayPlayers[id].getY()+" "+arrayPlayers[id].bombaSize);
                         }
                         catch(Exception ex){
@@ -1309,7 +1199,14 @@ class ClienteTESTE extends JFrame {
                             }
                             break;
                         case "BOM":
-                            System.out.println("Player"+id+" RECEBEU BOM = "+leitura);
+                            arrayBombas.add(new Bomba(Integer.parseInt(leituraPartes[1]), Integer.parseInt(leituraPartes[2]), Integer.parseInt(leituraPartes[3])));
+                            //recebe ("BOM "+arrayBombas.get(i).x+" "+arrayBombas.get(i).y+" "+arrayBombas.get(i).indexImage)
+                            System.out.println("Player"+id+" RECEBEU BOM = "+leitura+"]");
+                            break;
+                        case "EXP":
+                            arrayExplosao.add(new pontoExplosao(Integer.parseInt(leituraPartes[1]), Integer.parseInt(leituraPartes[2]), Integer.parseInt(leituraPartes[3])));
+                            //recebe ("EXP "+arrayExplosao.get(i).x+" "+arrayExplosao.get(i).y+" "+arrayExlosao.get(i).tipoDeAnimacao)
+                            System.out.println("Player"+id+" RECEBEU EXP = ["+leitura+"]");
                             break;
                     }
                     ///////
@@ -1343,6 +1240,6 @@ class ClienteTESTE extends JFrame {
     }
 
     static public void main(String[] args) throws InterruptedException {
-        new ClienteTESTE();
+        new ClienteT2();
     }
 }
