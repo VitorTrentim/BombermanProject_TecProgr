@@ -349,7 +349,7 @@ class ClienteTESTE extends JFrame {
                                 break;
                         }
                         // Checa colisao da explosao com o player
-                        if(!arrayPlayers[id-1].boolDanoRecente && arrayExplosao.get(i).hitBox.intersects(arrayPlayers[id-1].getHitBox())) {
+                        if(!arrayPlayers[id].boolDanoRecente && arrayExplosao.get(i).hitBox.intersects(arrayPlayers[id].getHitBox())) {
                           //  currentPlayer.danificado();
                         }
                         if(multiplay){
@@ -445,20 +445,20 @@ class ClienteTESTE extends JFrame {
     }
 
     public void checkVida(){
-        if (arrayPlayers[id-1].getVida() == 3){
+        if (arrayPlayers[id].getVida() == 3){
             primeiroCoracao.setIcon(coracaoCheio);
             segundoCoracao.setIcon(coracaoCheio);
             terceiroCoracao.setIcon(coracaoCheio);
-        } else if (arrayPlayers[id-1].getVida() == 2) {
+        } else if (arrayPlayers[id].getVida() == 2) {
             primeiroCoracao.setIcon(coracaoVazio);
             segundoCoracao.setIcon(coracaoCheio);
             terceiroCoracao.setIcon(coracaoCheio);
         }
-        else if (arrayPlayers[id-1].getVida() == 1){
+        else if (arrayPlayers[id].getVida() == 1){
             primeiroCoracao.setIcon(coracaoVazio);
             segundoCoracao.setIcon(coracaoVazio);
             terceiroCoracao.setIcon(coracaoCheio);
-        } else if (arrayPlayers[id-1].getVida() == 0){
+        } else if (arrayPlayers[id].getVida() == 0){
             primeiroCoracao.setIcon(coracaoVazio);
             segundoCoracao.setIcon(coracaoVazio);
             terceiroCoracao.setIcon(coracaoVazio);
@@ -601,6 +601,11 @@ class ClienteTESTE extends JFrame {
                 imagensPlayer[DANIFICADO] = new ImageIcon("Resources//Models//playerModel"+1+"Damaged.gif").getImage(); //mudar
 
                 personagem = imagensPlayer[PARADO];
+                if(tipoPersonagem == PERS1){
+                    X = 60; Y = 40;
+                } else {
+                    X = 860; Y=540;
+                }
             }catch (Exception erroPlayer){
                 System.out.println("Erro (Player): "+erroPlayer);
             }
@@ -616,21 +621,21 @@ class ClienteTESTE extends JFrame {
                 this.qtdeItemBota--;
                 somaScore-=100;
                 labelScore.setText(String.valueOf(somaScore));
-                labelQuantidadeItemBota.setText("x"+arrayPlayers[id-1].qtdeItemBota);
+                labelQuantidadeItemBota.setText("x"+arrayPlayers[id].qtdeItemBota);
             }
             if(this.bombaSize>1) {
                 this.bombaSize--;
                 this.qtdeItemExplosao--;
                 somaScore-=100;
                 labelScore.setText(String.valueOf(somaScore));
-                labelQuantidadeItemExplosao.setText("x"+arrayPlayers[id-1].qtdeItemExplosao);
+                labelQuantidadeItemExplosao.setText("x"+arrayPlayers[id].qtdeItemExplosao);
             }
             if(this.maxBombas > 2) {
                 this.maxBombas--;
                 this.qtdeItemBomba--;
                 somaScore-=100;
                 labelScore.setText(String.valueOf(somaScore));
-                labelQuantidadeItemBomba.setText("x"+arrayPlayers[id-1].qtdeItemBomba);
+                labelQuantidadeItemBomba.setText("x"+arrayPlayers[id].qtdeItemBomba);
             }
         }
 
@@ -811,15 +816,15 @@ class ClienteTESTE extends JFrame {
             System.out.println("LayoutDeCima Passo 1");
 
             //// Quantidade dos itens
-            labelQuantidadeItemBota = new JLabel("x"+arrayPlayers[id-1].qtdeItemBota);
+            labelQuantidadeItemBota = new JLabel("x"+arrayPlayers[id].qtdeItemBota);
             labelQuantidadeItemBota.setBounds(737,10,36,36);
             labelQuantidadeItemBota.setForeground(Color.white);
 
-            labelQuantidadeItemBomba = new JLabel("x"+arrayPlayers[id-1].qtdeItemBomba);
+            labelQuantidadeItemBomba = new JLabel("x"+arrayPlayers[id].qtdeItemBomba);
             labelQuantidadeItemBomba.setBounds(797,10,36,36);
             labelQuantidadeItemBomba.setForeground(Color.white);
 
-            labelQuantidadeItemExplosao = new JLabel("x"+arrayPlayers[id-1].qtdeItemExplosao);
+            labelQuantidadeItemExplosao = new JLabel("x"+arrayPlayers[id].qtdeItemExplosao);
             labelQuantidadeItemExplosao.setBounds(857,10,36,36);
             labelQuantidadeItemExplosao.setForeground(Color.white);
             //
@@ -1066,17 +1071,17 @@ class ClienteTESTE extends JFrame {
                 if(gameControler == inGame){
                     if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
                         System.out.println("Key working.");
-                        arrayPlayers[id-1].moveRight = true;
+                        arrayPlayers[id].moveRight = true;
                     } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-                        arrayPlayers[id-1].moveLeft = true;
+                        arrayPlayers[id].moveLeft = true;
                     } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-                        arrayPlayers[id-1].moveDown = true;
+                        arrayPlayers[id].moveDown = true;
                     } else if (e.getKeyCode() == KeyEvent.VK_UP) {
-                        arrayPlayers[id-1].moveUp = true;
+                        arrayPlayers[id].moveUp = true;
                     } else if (e.getKeyCode() == KeyEvent.VK_SPACE) {
                         try{
                             System.out.println("Botou bomba.");
-                            rede.streamEnviaAoServidor.writeUTF("BOM "+arrayPlayers[id-1].getX()+" "+arrayPlayers[id-1].getY()+" "+arrayPlayers[id-1].bombaSize);
+                            rede.streamEnviaAoServidor.writeUTF("BOM "+arrayPlayers[id].getX()+" "+arrayPlayers[id].getY()+" "+arrayPlayers[id].bombaSize);
                         }
                         catch(Exception ex){
                             System.out.println("\nErro ao criar bomba: "+ex);
@@ -1095,18 +1100,18 @@ class ClienteTESTE extends JFrame {
             public void keyReleased(KeyEvent kr){
                 if(gameControler == inGame) {
                     if (kr.getKeyCode() == KeyEvent.VK_RIGHT) {
-                        arrayPlayers[id-1].moveRight = false;
-                        System.out.println("pos: "+arrayPlayers[id-1].getX()+","+ arrayPlayers[id-1].getY()+".");
+                        arrayPlayers[id].moveRight = false;
+                        System.out.println("pos: "+arrayPlayers[id].getX()+","+ arrayPlayers[id].getY()+".");
                     } else if (kr.getKeyCode() == KeyEvent.VK_LEFT) {
-                        arrayPlayers[id-1].moveLeft = false;
-                        System.out.println("pos: "+arrayPlayers[id-1].getX()+","+ arrayPlayers[id-1].getY()+".");
+                        arrayPlayers[id].moveLeft = false;
+                        System.out.println("pos: "+arrayPlayers[id].getX()+","+ arrayPlayers[id].getY()+".");
                     }
                     if (kr.getKeyCode() == KeyEvent.VK_UP) {
-                        arrayPlayers[id-1].moveUp = false;
-                        System.out.println("pos: "+arrayPlayers[id-1].getX()+","+ arrayPlayers[id-1].getY()+".");
+                        arrayPlayers[id].moveUp = false;
+                        System.out.println("pos: "+arrayPlayers[id].getX()+","+ arrayPlayers[id].getY()+".");
                     } else if (kr.getKeyCode() == KeyEvent.VK_DOWN) {
-                        arrayPlayers[id-1].moveDown = false;
-                        System.out.println("pos: "+arrayPlayers[id-1].getX()+","+ arrayPlayers[id-1].getY()+".");
+                        arrayPlayers[id].moveDown = false;
+                        System.out.println("pos: "+arrayPlayers[id].getX()+","+ arrayPlayers[id].getY()+".");
                     } else if (kr.getKeyCode() == KeyEvent.VK_ENTER) {
                         if(gameControler == inGame) {
                             System.out.println("Pressionou enter - trocar de mult.");
@@ -1142,29 +1147,14 @@ class ClienteTESTE extends JFrame {
     void RequestID(Rede rede){
         try {
             System.out.println("Request Passo 1");
-            idString = rede.streamRecebeDoServidor.readUTF();
-            while (!idString.equals("1") && !idString.equals("2")) { //enquanto não receber 1 ou 2
+            idString = rede.streamRecebeDoServidor.readUTF(); //lê o input
+            while (!idString.equals("0") && !idString.equals("1")) { //enquanto não receber 0 ou 1
                 System.out.println("preso no while RequestID");
                 rede.streamEnviaAoServidor.writeUTF("IdRequest"); //envia pedido para receber o id
                 rede.streamEnviaAoServidor.flush();
                 idString = rede.streamRecebeDoServidor.readUTF(); //lê o input
                 System.out.println("Request Passo 2");
-            }
-            id = Integer.parseInt(idString);
-            System.out.println("RECEBEU O ID " + id);
-
-            rede.streamEnviaAoServidor.writeUTF("POSINIC "+id+" "+ arrayPlayers[id - 1].X + " " + arrayPlayers[id - 1].Y + " " + arrayPlayers[id - 1].estado);
-            rede.streamEnviaAoServidor.flush();
-            System.out.println("Player"+id+" ENVIOU POS INICIAK = "+"POSINIC "+id+" "+ arrayPlayers[id - 1].X + " " + arrayPlayers[id - 1].Y + " " + arrayPlayers[id - 1].estado);
-
-            System.out.println("Envia POS inicial Passo 1");
-            idString = rede.streamRecebeDoServidor.readUTF();
-            while (!idString.equals("PosAcc")) { //enquanto não receber PosAcc
-                System.out.println("preso no while PosAcc");
-                rede.streamEnviaAoServidor.writeUTF("POSINIC "+id+" "+ arrayPlayers[id - 1].X + " " + arrayPlayers[id - 1].Y + " " + arrayPlayers[id - 1].estado);
-                rede.streamEnviaAoServidor.flush();
-                idString = rede.streamRecebeDoServidor.readUTF(); //lê o input
-                System.out.println("Envia POS inicial Passo 2");
+                Thread.sleep(25);
             }
             id = Integer.parseInt(idString);
             System.out.println("RECEBEU O ID " + id);
@@ -1183,95 +1173,95 @@ class ClienteTESTE extends JFrame {
                 while(true) {
 
                     ///
-                    if (arrayPlayers[id-1].boolDanoRecente) {
-                        if (arrayPlayers[id-1].danoRecente++ == 0) {
+                    if (arrayPlayers[id].boolDanoRecente) {
+                        if (arrayPlayers[id].danoRecente++ == 0) {
                             checkVida();
                             scoreVida -= 100;
-                            arrayPlayers[id-1].personagem = arrayPlayers[id-1].imagensPlayer[DANIFICADO];
-                            arrayPlayers[id-1].boolStunned = true;
+                            arrayPlayers[id].personagem = arrayPlayers[id].imagensPlayer[DANIFICADO];
+                            arrayPlayers[id].boolStunned = true;
                         }
-                        if (arrayPlayers[id-1].danoRecente >= 20) { // numero de "ticks" de imobilização
-                            arrayPlayers[id-1].boolStunned = false;
+                        if (arrayPlayers[id].danoRecente >= 20) { // numero de "ticks" de imobilização
+                            arrayPlayers[id].boolStunned = false;
                         }
-                        if (arrayPlayers[id-1].danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
-                            arrayPlayers[id-1].boolDanoRecente = false;
-                            arrayPlayers[id-1].danoRecente = 0;
+                        if (arrayPlayers[id].danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
+                            arrayPlayers[id].boolDanoRecente = false;
+                            arrayPlayers[id].danoRecente = 0;
                         }
                     }
 
                     //Checa se está danificado
-                    if (arrayPlayers[id-1] != null && arrayPlayers[id-1].boolDanoRecente) {
+                    if (arrayPlayers[id] != null && arrayPlayers[id].boolDanoRecente) {
                         System.out.println("Entrou no primeiro if");
-                        if (arrayPlayers[id-1].danoRecente++ == 0) {
+                        if (arrayPlayers[id].danoRecente++ == 0) {
                             checkVida();
-                            arrayPlayers[id-1].personagem = arrayPlayers[id-1].imagensPlayer[DANIFICADO];
-                            arrayPlayers[id-1].boolStunned = true;
+                            arrayPlayers[id].personagem = arrayPlayers[id].imagensPlayer[DANIFICADO];
+                            arrayPlayers[id].boolStunned = true;
                         }
-                        if (arrayPlayers[id-1].danoRecente >= 20) { // numero de "ticks" de imobilização
-                            arrayPlayers[id-1].boolStunned = false;
+                        if (arrayPlayers[id].danoRecente >= 20) { // numero de "ticks" de imobilização
+                            arrayPlayers[id].boolStunned = false;
                         }
-                        if (arrayPlayers[id-1].danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
-                            arrayPlayers[id-1].boolDanoRecente = false;
-                            arrayPlayers[id-1].danoRecente = 0;
+                        if (arrayPlayers[id].danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
+                            arrayPlayers[id].boolDanoRecente = false;
+                            arrayPlayers[id].danoRecente = 0;
                         }
                     }
 
-                    if (!arrayPlayers[id-1].boolStunned && arrayPlayers[id-1].getVida()>0) { // Se não tomou dano recente (stun) e está vivo
-                        if (arrayPlayers[id-1].estado == PARADO) {
-                            arrayPlayers[id-1].personagem = arrayPlayers[id-1].imagensPlayer[PARADO];
-                        } else if (arrayPlayers[id-1].estado == ANDANDO_DIREITA) {
-                            arrayPlayers[id-1].personagem = arrayPlayers[id-1].imagensPlayer[ANDANDO_DIREITA];
-                        } else if (arrayPlayers[id-1].estado == ANDANDO_ESQUERDA) {
-                            arrayPlayers[id-1].personagem = arrayPlayers[id-1].imagensPlayer[ANDANDO_ESQUERDA];
-                        } else if (arrayPlayers[id-1].estado == ANDANDO_FRENTE) {
-                            arrayPlayers[id-1].personagem = arrayPlayers[id-1].imagensPlayer[ANDANDO_FRENTE];
-                        } else if (arrayPlayers[id-1].estado == ANDANDO_COSTAS) {
-                            arrayPlayers[id-1].personagem = arrayPlayers[id-1].imagensPlayer[ANDANDO_COSTAS];
+                    if (!arrayPlayers[id].boolStunned && arrayPlayers[id].getVida()>0) { // Se não tomou dano recente (stun) e está vivo
+                        if (arrayPlayers[id].estado == PARADO) {
+                            arrayPlayers[id].personagem = arrayPlayers[id].imagensPlayer[PARADO];
+                        } else if (arrayPlayers[id].estado == ANDANDO_DIREITA) {
+                            arrayPlayers[id].personagem = arrayPlayers[id].imagensPlayer[ANDANDO_DIREITA];
+                        } else if (arrayPlayers[id].estado == ANDANDO_ESQUERDA) {
+                            arrayPlayers[id].personagem = arrayPlayers[id].imagensPlayer[ANDANDO_ESQUERDA];
+                        } else if (arrayPlayers[id].estado == ANDANDO_FRENTE) {
+                            arrayPlayers[id].personagem = arrayPlayers[id].imagensPlayer[ANDANDO_FRENTE];
+                        } else if (arrayPlayers[id].estado == ANDANDO_COSTAS) {
+                            arrayPlayers[id].personagem = arrayPlayers[id].imagensPlayer[ANDANDO_COSTAS];
                         } else {
-                            arrayPlayers[id-1].personagem = arrayPlayers[id-1].imagensPlayer[PARADO];
+                            arrayPlayers[id].personagem = arrayPlayers[id].imagensPlayer[PARADO];
                         }
 
-                        if (arrayPlayers[id-1].moveRight) {
-                            if (intersBombas(new Rectangle(arrayPlayers[id-1].X + arrayPlayers[id-1].velocidade, arrayPlayers[id-1].Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(arrayPlayers[id-1].X + arrayPlayers[id-1].velocidade, arrayPlayers[id-1].Y + 15, 30, 35), mult.blocosFixos) && intersBlocosQuebraveis(new Rectangle(arrayPlayers[id-1].X + arrayPlayers[id-1].velocidade, arrayPlayers[id-1].Y + 15, 30, 35), mult.arrayBlocosQuebraveis) && arrayPlayers[id-1].X <= 866) {
-                                arrayPlayers[id-1].X += arrayPlayers[id-1].velocidade;
+                        if (arrayPlayers[id].moveRight) {
+                            if (intersBombas(new Rectangle(arrayPlayers[id].X + arrayPlayers[id].velocidade, arrayPlayers[id].Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(arrayPlayers[id].X + arrayPlayers[id].velocidade, arrayPlayers[id].Y + 15, 30, 35), mult.blocosFixos) && intersBlocosQuebraveis(new Rectangle(arrayPlayers[id].X + arrayPlayers[id].velocidade, arrayPlayers[id].Y + 15, 30, 35), mult.arrayBlocosQuebraveis) && arrayPlayers[id].X <= 866) {
+                                arrayPlayers[id].X += arrayPlayers[id].velocidade;
                             }
-                            if (arrayPlayers[id-1].estado != ANDANDO_DIREITA && !arrayPlayers[id-1].moveDown && !arrayPlayers[id-1].moveUp) {
-                                arrayPlayers[id-1].estado = ANDANDO_DIREITA;
+                            if (arrayPlayers[id].estado != ANDANDO_DIREITA && !arrayPlayers[id].moveDown && !arrayPlayers[id].moveUp) {
+                                arrayPlayers[id].estado = ANDANDO_DIREITA;
                             }
-                        } else if (arrayPlayers[id-1].moveLeft) {
-                            if (intersBombas(new Rectangle(arrayPlayers[id-1].X - arrayPlayers[id-1].velocidade, arrayPlayers[id-1].Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(arrayPlayers[id-1].X - arrayPlayers[id-1].velocidade, arrayPlayers[id-1].Y + 15, 30, 35), mult.blocosFixos) && intersBlocosQuebraveis(new Rectangle(arrayPlayers[id-1].X - arrayPlayers[id-1].velocidade, arrayPlayers[id-1].Y + 15, 30, 35), mult.arrayBlocosQuebraveis) && arrayPlayers[id-1].X >= 54) {
-                                arrayPlayers[id-1].X -= arrayPlayers[id-1].velocidade;
+                        } else if (arrayPlayers[id].moveLeft) {
+                            if (intersBombas(new Rectangle(arrayPlayers[id].X - arrayPlayers[id].velocidade, arrayPlayers[id].Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(arrayPlayers[id].X - arrayPlayers[id].velocidade, arrayPlayers[id].Y + 15, 30, 35), mult.blocosFixos) && intersBlocosQuebraveis(new Rectangle(arrayPlayers[id].X - arrayPlayers[id].velocidade, arrayPlayers[id].Y + 15, 30, 35), mult.arrayBlocosQuebraveis) && arrayPlayers[id].X >= 54) {
+                                arrayPlayers[id].X -= arrayPlayers[id].velocidade;
                             }
 
-                            if (arrayPlayers[id-1].estado != ANDANDO_ESQUERDA && !arrayPlayers[id-1].moveDown && !arrayPlayers[id-1].moveUp) {
-                                arrayPlayers[id-1].estado = ANDANDO_ESQUERDA;
+                            if (arrayPlayers[id].estado != ANDANDO_ESQUERDA && !arrayPlayers[id].moveDown && !arrayPlayers[id].moveUp) {
+                                arrayPlayers[id].estado = ANDANDO_ESQUERDA;
                             }
 
                         }
-                        if (arrayPlayers[id-1].moveDown) {
-                            if (intersBombas(new Rectangle(arrayPlayers[id-1].X, arrayPlayers[id-1].Y + arrayPlayers[id-1].velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(arrayPlayers[id-1].X, arrayPlayers[id-1].Y + arrayPlayers[id-1].velocidade + 15, 30, 35), mult.blocosFixos) && intersBlocosQuebraveis(new Rectangle(arrayPlayers[id-1].X, arrayPlayers[id-1].Y + arrayPlayers[id-1].velocidade + 15, 30, 35), mult.arrayBlocosQuebraveis) && arrayPlayers[id-1].Y <= 546) {
-                                arrayPlayers[id-1].Y += arrayPlayers[id-1].velocidade;
+                        if (arrayPlayers[id].moveDown) {
+                            if (intersBombas(new Rectangle(arrayPlayers[id].X, arrayPlayers[id].Y + arrayPlayers[id].velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(arrayPlayers[id].X, arrayPlayers[id].Y + arrayPlayers[id].velocidade + 15, 30, 35), mult.blocosFixos) && intersBlocosQuebraveis(new Rectangle(arrayPlayers[id].X, arrayPlayers[id].Y + arrayPlayers[id].velocidade + 15, 30, 35), mult.arrayBlocosQuebraveis) && arrayPlayers[id].Y <= 546) {
+                                arrayPlayers[id].Y += arrayPlayers[id].velocidade;
                             }
 
-                            if (arrayPlayers[id-1].estado != ANDANDO_FRENTE) {
-                                arrayPlayers[id-1].estado = ANDANDO_FRENTE;
+                            if (arrayPlayers[id].estado != ANDANDO_FRENTE) {
+                                arrayPlayers[id].estado = ANDANDO_FRENTE;
                             }
 
 
-                        } else if (arrayPlayers[id-1].moveUp) {
-                            if (intersBombas(new Rectangle(arrayPlayers[id-1].X, arrayPlayers[id-1].Y - arrayPlayers[id-1].velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(arrayPlayers[id-1].X, arrayPlayers[id-1].Y - arrayPlayers[id-1].velocidade + 15, 30, 35), mult.blocosFixos) && intersBlocosQuebraveis(new Rectangle(arrayPlayers[id-1].X, arrayPlayers[id-1].Y - arrayPlayers[id-1].velocidade + 15, 30, 35), mult.arrayBlocosQuebraveis) && arrayPlayers[id-1].Y >= 30) {
-                                arrayPlayers[id-1].Y -= arrayPlayers[id-1].velocidade;
+                        } else if (arrayPlayers[id].moveUp) {
+                            if (intersBombas(new Rectangle(arrayPlayers[id].X, arrayPlayers[id].Y - arrayPlayers[id].velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(arrayPlayers[id].X, arrayPlayers[id].Y - arrayPlayers[id].velocidade + 15, 30, 35), mult.blocosFixos) && intersBlocosQuebraveis(new Rectangle(arrayPlayers[id].X, arrayPlayers[id].Y - arrayPlayers[id].velocidade + 15, 30, 35), mult.arrayBlocosQuebraveis) && arrayPlayers[id].Y >= 30) {
+                                arrayPlayers[id].Y -= arrayPlayers[id].velocidade;
                             }
 
-                            if (arrayPlayers[id-1].estado != ANDANDO_COSTAS) {
-                                arrayPlayers[id-1].estado = ANDANDO_COSTAS;
+                            if (arrayPlayers[id].estado != ANDANDO_COSTAS) {
+                                arrayPlayers[id].estado = ANDANDO_COSTAS;
                             }
 
                             // }
                         }
-                        if (!arrayPlayers[id-1].moveDown && !arrayPlayers[id-1].moveUp && !arrayPlayers[id-1].moveLeft && !arrayPlayers[id-1].moveRight) {
-                            if (arrayPlayers[id-1].estado != PARADO) {
-                                arrayPlayers[id-1].estado = PARADO;
+                        if (!arrayPlayers[id].moveDown && !arrayPlayers[id].moveUp && !arrayPlayers[id].moveLeft && !arrayPlayers[id].moveRight) {
+                            if (arrayPlayers[id].estado != PARADO) {
+                                arrayPlayers[id].estado = PARADO;
                             }
                         }
                     }
@@ -1291,26 +1281,21 @@ class ClienteTESTE extends JFrame {
             try {
                 /////////// Leitura e envio dos dados do jogo
                 while (true) {
-                    while (true) {
+                    leitura = rede.streamRecebeDoServidor.readUTF();
+                    leituraPartes = leitura.split(" ");
+                    System.out.println("Player"+id+" LEITURA = "+leitura);
+                    while (!leituraPartes[0].equals("POS") || !leituraPartes[0].equals("BOM")) {
                         sleep(25);
-                        System.out.println("Player"+id+" LEITURA");
                         leitura = rede.streamRecebeDoServidor.readUTF();
-                        ///////// LEITURA
-                        System.out.println("Player"+id+" LEITURA = "+leitura);
-                        System.out.println("Leitura player = " + leitura);
                         leituraPartes = leitura.split(" ");
-                        System.out.println("Player"+id+" SPLIT = "+leituraPartes[0]);
+                        System.out.println("Player"+id+" LEITURA = "+leitura);
 
-                        if (leituraPartes[0].equals("POS") || leituraPartes[0].equals("BOM")) {
-                            System.out.println("Player"+id+" LEU UM COMANDO");
-                            break;
-                        }
+                        sleep(25);
                     }
                     switch (leituraPartes[0]) {
                         case "POS":
                             System.out.println("Player"+id+" RECEBEU POS = "+leitura);
                             AuxID = Integer.parseInt(leituraPartes[1]);
-                            AuxID--;
                             arrayPlayers[AuxID].X = Integer.parseInt(leituraPartes[2]);
                             arrayPlayers[AuxID].Y = Integer.parseInt(leituraPartes[3]);
                             arrayPlayers[AuxID].estado = Integer.parseInt(leituraPartes[4]);
@@ -1322,7 +1307,7 @@ class ClienteTESTE extends JFrame {
                             break;
                     }
                     ///////
-                    repaint();
+                    sleep(3000);
                 }
             } catch (Exception eRef) {
                 System.out.println("Erro no LeituraDoFluxo: " + eRef);
@@ -1336,15 +1321,14 @@ class ClienteTESTE extends JFrame {
             try {
                 /////////// Leitura e envio dos dados do jogo
                 while (true) {
-                    sleep(25);
                     ///////// Envia a posição do jogador desse cliente ao servidor
                     //synchronized (movimentoPlayerAtual) {
-                    rede.streamEnviaAoServidor.writeUTF("POS "+id+" "+ arrayPlayers[id - 1].X + " " + arrayPlayers[id - 1].Y + " " + arrayPlayers[id - 1].estado);
+                    rede.streamEnviaAoServidor.writeUTF("POS "+id+" "+ arrayPlayers[id].X + " " + arrayPlayers[id].Y + " " + arrayPlayers[id].estado);
                     rede.streamEnviaAoServidor.flush();
-                    System.out.println("Player"+id+" ENVIOU POS = "+"POS "+id+" "+ arrayPlayers[id - 1].X + " " + arrayPlayers[id - 1].Y + " " + arrayPlayers[id - 1].estado);
+                    System.out.println("Player"+id+" ENVIOU POS = "+"POS "+id+" "+ arrayPlayers[id].X + " " + arrayPlayers[id].Y + " " + arrayPlayers[id].estado);
                     //}
                     ///////
-                    repaint();
+                    sleep(3000);
                 }
             } catch (Exception eRef) {
                 System.out.println("Erro no EnvioDoFluxo: " + eRef);

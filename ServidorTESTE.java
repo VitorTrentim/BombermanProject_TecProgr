@@ -31,11 +31,11 @@ class ServidorTESTE extends Thread {
     int PORTO = 12345;
     ServerSocket serverSocket = null;
     //Socket arrayPlayerSockets[] = new Socket[2];
-    Socket socketPlayer1, socketPlayer2;
+    Socket socketPlayer0, socketPlayer1;
     //// DADOS PLAYER
     final int PERS1 = 1, PERS2 = 2;
     //PlayerThread arrayPlayerThread[] = new PlayerThread[2];
-    PlayerThread2 threadPlayer1, threadPlayer2;
+    PlayerThread2 threadPlayer0, threadPlayer1;
     String stringQuantidadeDePlayers;
     int intQuantidadeDePlayers;
 
@@ -107,11 +107,11 @@ class ServidorTESTE extends Thread {
             // Checa as bombas recém colocadas e quando elas irão bloquear os players
             if (boolLastBombaBlockPlayer) {
                 if (!arrayBombas.isEmpty()) {
-                    if (!new Rectangle(threadPlayer1.X, threadPlayer1.Y + 15, 35, 40).intersects(arrayBombas.get(arrayBombas.size() - 1).getHitBox())) {
+                    if (!new Rectangle(threadPlayer0.X, threadPlayer0.Y + 15, 35, 40).intersects(arrayBombas.get(arrayBombas.size() - 1).getHitBox())) {
                     arrayBombas.get(arrayBombas.size() - 1).boolBloqueandoPlayer = true;
                     boolLastBombaBlockPlayer = false;
                     }
-                    else if (!new Rectangle(threadPlayer2.X, threadPlayer2.Y + 15, 35, 40).intersects(arrayBombas.get(arrayBombas.size() - 1).getHitBox())) {
+                    else if (!new Rectangle(threadPlayer1.X, threadPlayer1.Y + 15, 35, 40).intersects(arrayBombas.get(arrayBombas.size() - 1).getHitBox())) {
                         arrayBombas.get(arrayBombas.size() - 1).boolBloqueandoPlayer = true;
                         boolLastBombaBlockPlayer = false;
                     }
@@ -147,11 +147,11 @@ class ServidorTESTE extends Thread {
 
     void checkPlayerEnemyColision() {
         for (int i = 0; i < mult.arrayInimigos.size(); i++) {
+            if (threadPlayer0 != null && !threadPlayer0.boolDanoRecente && threadPlayer0.getHitBox().intersects(mult.arrayInimigos.get(i).getBounds())) {
+                threadPlayer0.danificado();
+        }
             if (threadPlayer1 != null && !threadPlayer1.boolDanoRecente && threadPlayer1.getHitBox().intersects(mult.arrayInimigos.get(i).getBounds())) {
                 threadPlayer1.danificado();
-        }
-            if (threadPlayer2 != null && !threadPlayer2.boolDanoRecente && threadPlayer2.getHitBox().intersects(mult.arrayInimigos.get(i).getBounds())) {
-                threadPlayer2.danificado();
             }
             if (mult.arrayInimigos.isEmpty())
                 break;
@@ -159,6 +159,18 @@ class ServidorTESTE extends Thread {
     }
 
     void damageDelayControl() {
+        if (threadPlayer0 != null && threadPlayer0.boolDanoRecente) {
+            if (threadPlayer0.danoRecente++ == 0) {
+                threadPlayer0.boolStunned = true;
+            }
+            if (threadPlayer0.danoRecente >= 20) { // numero de "ticks" de imobilização
+                threadPlayer0.boolStunned = false;
+            }
+            if (threadPlayer0.danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
+                threadPlayer0.boolDanoRecente = false;
+                threadPlayer0.danoRecente = 0;
+            }
+        }
         if (threadPlayer1 != null && threadPlayer1.boolDanoRecente) {
             if (threadPlayer1.danoRecente++ == 0) {
                 threadPlayer1.boolStunned = true;
@@ -171,24 +183,33 @@ class ServidorTESTE extends Thread {
                 threadPlayer1.danoRecente = 0;
             }
         }
-        if (threadPlayer2 != null && threadPlayer2.boolDanoRecente) {
-            if (threadPlayer2.danoRecente++ == 0) {
-                threadPlayer2.boolStunned = true;
-            }
-            if (threadPlayer2.danoRecente >= 20) { // numero de "ticks" de imobilização
-                threadPlayer2.boolStunned = false;
-            }
-            if (threadPlayer2.danoRecente >= 60) { // numero de "ticks" para que possa tomar outro dano, 40 ticks por segundo
-                threadPlayer2.boolDanoRecente = false;
-                threadPlayer2.danoRecente = 0;
-            }
-        }
 
         
     }
 
     void checkPlayerItemColision() {
         for (int i = 0; i < arrayItens.size(); i++) {
+            if (threadPlayer0 != null && threadPlayer0.getHitBox().intersects(arrayItens.get(i).getBounds())) {
+                if (arrayItens.get(i).item == ITEM_BOTA) {
+                    threadPlayer0.qtdeItemBota++;
+                    threadPlayer0.velocidade++; // Se houver uma intersecção do player com o item, incrementa velocidade
+                } else if (arrayItens.get(i).item == ITEM_TAMANHOEXPLOSAO) {
+                    threadPlayer0.qtdeItemExplosao++;
+                    threadPlayer0.bombaSize++;
+                } else if (arrayItens.get(i).item == ITEM_QTDEBOMBAS) {
+                    threadPlayer0.qtdeItemBomba++;
+                    threadPlayer0.maxBombas++;
+                } else {
+                    if (threadPlayer0.vida < 3) {
+                        threadPlayer0.vida++;
+                    }
+                }
+                arrayItens.remove(i);
+                i = 0;
+                if(arrayItens.isEmpty())
+                    break;
+                continue;
+            }
             if (threadPlayer1 != null && threadPlayer1.getHitBox().intersects(arrayItens.get(i).getBounds())) {
                 if (arrayItens.get(i).item == ITEM_BOTA) {
                     threadPlayer1.qtdeItemBota++;
@@ -202,27 +223,6 @@ class ServidorTESTE extends Thread {
                 } else {
                     if (threadPlayer1.vida < 3) {
                         threadPlayer1.vida++;
-                    }
-                }
-                arrayItens.remove(i);
-                i = 0;
-                if(arrayItens.isEmpty())
-                    break;
-                continue;
-            }
-            if (threadPlayer2 != null && threadPlayer2.getHitBox().intersects(arrayItens.get(i).getBounds())) {
-                if (arrayItens.get(i).item == ITEM_BOTA) {
-                    threadPlayer2.qtdeItemBota++;
-                    threadPlayer2.velocidade++; // Se houver uma intersecção do player com o item, incrementa velocidade
-                } else if (arrayItens.get(i).item == ITEM_TAMANHOEXPLOSAO) {
-                    threadPlayer2.qtdeItemExplosao++;
-                    threadPlayer2.bombaSize++;
-                } else if (arrayItens.get(i).item == ITEM_QTDEBOMBAS) {
-                    threadPlayer2.qtdeItemBomba++;
-                    threadPlayer2.maxBombas++;
-                } else {
-                    if (threadPlayer2.vida < 3) {
-                        threadPlayer2.vida++;
                     }
                 }
                 arrayItens.remove(i);
@@ -950,7 +950,7 @@ class ServidorTESTE extends Thread {
         ////
         int vida = 3, danoRecente = 0, velocidade = 4, qtdeItemBota, qtdeItemBomba, qtdeItemExplosao;
         boolean boolDanoRecente = false, boolStunned = false, moveRight = false, moveLeft = false, moveDown = false, moveUp = false;
-        int estado = PARADO, X=250, Y=250, maxBombas = 2, bombaSize = 1;
+        int estado = PARADO, X, Y, maxBombas = 2, bombaSize = 1;
         int id = 0;
         //// alteração socket
         Socket playerSocket;
@@ -974,23 +974,11 @@ class ServidorTESTE extends Thread {
                 this.threadEnvia = new PlayerThreadEnvia(streamEnviaAoCliente, id);
                 this.threadRecebe = new PlayerThreadRecebe(streamRecebeDoCliente, id);
 
-                streamEnviaAoCliente.writeUTF(Integer.toString(id));
-                streamEnviaAoCliente.flush();
-                System.out.println("Player"+id+" run");
-
-                do{ // recebe a posicao inicial
-                    leitura = streamRecebeDoCliente.readUTF();
-                }while(!leitura.startsWith("POSINIC"));
-
-                leituraPartes = leitura.split(" ");
-                this.X = Integer.parseInt(leituraPartes[2]);
-                this.Y = Integer.parseInt(leituraPartes[3]);
-                this.estado = Integer.parseInt(leituraPartes[4]);
-                //recebe ("POSINIC "+id+" "+ arrayPlayers[id - 1].X + " " + arrayPlayers[id - 1].Y + " " + arrayPlayers[id - 1].estado)
-                streamEnviaAoCliente.writeUTF("PosAcc");
-                streamEnviaAoCliente.flush();
-                System.out.println("Player"+id+" posicionado");
-
+                if(id == 0){
+                    X = 60; Y = 40;
+                } else {
+                    X = 860; Y=540;
+                }
                 threadEnvia.start();
                 threadRecebe.start();
             } catch (Exception erroPlayer) {
@@ -1021,22 +1009,21 @@ class ServidorTESTE extends Thread {
                     System.out.println("ThreadPlayer"+id+" ENVIA: Passou While SEGURA Thread");
 
                     while(true){
-                        sleep(25);
                         System.out.println("ThreadPlayer"+id+" ENVIA: (While true)");
 
                         if(!boolTrocandoDados)
                             boolTrocandoDados = true;
 
-//                        //envia ao cliente posicoes
-//                        if(id == 1){ //se o id for 1, envia a pos do player2 ao cliente
-//                            os.writeUTF("POS "+"2 "+threadPlayer2.X+" "+threadPlayer2.Y+" "+threadPlayer2.estado);
-//                            os.flush();
-//                            System.out.println("ThreadPlayer"+id+" ENVIA: POS "+"2 "+threadPlayer2.X+" "+threadPlayer2.Y+" "+threadPlayer2.estado);
-//                        } else { //se o id for 2, envia a pos do player 1 ao cliente
-//                            os.writeUTF("POS "+"1 "+threadPlayer1.X+" "+threadPlayer1.Y+" "+threadPlayer1.estado);
-//                            os.flush();
-//                            System.out.println("ThreadPlayer"+id+" ENVIA: POS "+"1 "+threadPlayer1.X+" "+threadPlayer1.Y+" "+threadPlayer1.estado);
-//                        }
+                        //envia ao cliente posicoes
+                        if(id == 0){ //se o id for 0, envia a pos do 1 ao cliente
+                            os.writeUTF("POS "+"1 "+threadPlayer1.X+" "+threadPlayer1.Y+" "+threadPlayer1.estado);
+                            os.flush();
+                            System.out.println("ThreadPlayer"+id+" ENVIA: POS "+"2 "+threadPlayer1.X+" "+threadPlayer1.Y+" "+threadPlayer1.estado);
+                        } else { //se o id for 1, envia a pos do 0 ao cliente
+                            os.writeUTF("POS "+"0 "+threadPlayer0.X+" "+threadPlayer0.Y+" "+threadPlayer0.estado);
+                            os.flush();
+                            System.out.println("ThreadPlayer"+id+" ENVIA: POS "+"1 "+threadPlayer0.X+" "+threadPlayer0.Y+" "+threadPlayer0.estado);
+                        }
 
                         //envia ao cliente o array das bombas
                         if(!arrayBombas.isEmpty()){
@@ -1046,6 +1033,7 @@ class ServidorTESTE extends Thread {
                                 System.out.println("ThreadPlayer"+id+" Envia: arrayBombas");
                             }
                         }
+                        sleep(3000);
                     }
                 }
                 catch(NoSuchElementException e){
@@ -1088,18 +1076,14 @@ class ServidorTESTE extends Thread {
                                 auxID = Integer.parseInt(leituraPartes[2]);
                                 System.out.println("ThreadPlayer"+id+" auauauauau");
                                 if(auxID == 1){
-                                    threadPlayer2.streamEnviaAoCliente.writeUTF(leitura);
-                                    threadPlayer2.streamEnviaAoCliente.flush();
-                                    threadPlayer2.X = Integer.parseInt(leituraPartes[1]);
-                                    threadPlayer2.Y = Integer.parseInt(leituraPartes[2]);
-                                    threadPlayer2.estado = Integer.parseInt(leituraPartes[3]);
-                                    //recebe:("POS "+id+" "+arrayPlayers[0].getX()+" "+arrayPlayers[0].getY()+" "+arrayPlayers[0].estado)
-                                } else {
-                                    threadPlayer1.streamEnviaAoCliente.writeUTF(leitura);
-                                    threadPlayer1.streamEnviaAoCliente.flush();
                                     threadPlayer1.X = Integer.parseInt(leituraPartes[1]);
                                     threadPlayer1.Y = Integer.parseInt(leituraPartes[2]);
                                     threadPlayer1.estado = Integer.parseInt(leituraPartes[3]);
+                                    //recebe:("POS "+id+" "+arrayPlayers[0].getX()+" "+arrayPlayers[0].getY()+" "+arrayPlayers[0].estado)
+                                } else {
+                                    threadPlayer0.X = Integer.parseInt(leituraPartes[1]);
+                                    threadPlayer0.Y = Integer.parseInt(leituraPartes[2]);
+                                    threadPlayer0.estado = Integer.parseInt(leituraPartes[3]);
                                     //recebe:("POS "+arrayPlayers[0].getX()+" "+arrayPlayers[0].getY()+" "+arrayPlayers[0].estado)
                                 }
                                 System.out.println("caraio eita caraio");
@@ -1114,6 +1098,8 @@ class ServidorTESTE extends Thread {
                                 System.out.println("ThreadPlayer"+id+" RECEBEU EXP = " + leitura);
                                 break;
                         }
+
+                        sleep(3000);
                     }
                 }
                 catch(NoSuchElementException e){
@@ -1247,10 +1233,10 @@ class ServidorTESTE extends Thread {
 //                    ///// ENVIO DOS DADOS AO CLIENTE
 //                    //envia ao cliente posicoes
 //                    if(id == 1){ //se o id for 1, envia a pos do player2 ao cliente
-//                        streamEnviaAoCliente.writeUTF("POS "+"2 "+threadPlayer2.X+" "+threadPlayer2.Y+" "+threadPlayer2.estado);
+//                        streamEnviaAoCliente.writeUTF("POS "+"2 "+threadPlayer1.X+" "+threadPlayer1.Y+" "+threadPlayer1.estado);
 //                        streamEnviaAoCliente.flush();
 //                    } else { //se o id for 2, envia a pos do player 1 ao cliente
-//                        streamEnviaAoCliente.writeUTF("POS "+"1 "+threadPlayer1.X+" "+threadPlayer1.Y+" "+threadPlayer1.estado);
+//                        streamEnviaAoCliente.writeUTF("POS "+"1 "+threadPlayer0.X+" "+threadPlayer0.Y+" "+threadPlayer0.estado);
 //                        streamEnviaAoCliente.flush();
 //                    }
 //                    System.out.println("Envia Bomba");
@@ -1318,10 +1304,10 @@ class ServidorTESTE extends Thread {
 
             // CONEXÃO 1
             System.out.println("Aguardando primeira conexao.");
-            socketPlayer1 = serverSocket.accept();
+            socketPlayer0 = serverSocket.accept();
 
             System.out.println("Player 1 conectado. Enviando o clientSocket ao PlayerThread.");
-            threadPlayer1 = new PlayerThread2(socketPlayer1, 1);
+            threadPlayer0 = new PlayerThread2(socketPlayer0, 0);
         }
         catch(Exception e){
             System.out.println("Erro na conexao 1. - "+e);
@@ -1332,9 +1318,9 @@ class ServidorTESTE extends Thread {
         try{
             // CONEXÃO 2
             System.out.println("Aguardando segunda conexao.");
-            socketPlayer2 = serverSocket.accept();
+            socketPlayer1 = serverSocket.accept();
             System.out.println("Player 2 conectado. Enviando o clientSocket ao PlayerThread.");
-            threadPlayer2 = new PlayerThread2(socketPlayer2, 2);
+            threadPlayer1 = new PlayerThread2(socketPlayer1, 1);
         }
         catch(Exception e){
             System.out.println("Erro na conexao 2. - "+e);
@@ -1347,8 +1333,8 @@ class ServidorTESTE extends Thread {
     void desbloqueiaThreads(){
         System.out.println("Desbloqueando as threads dos players.");
         //Colocar timer p enviar o tempo
+        threadPlayer0.boolIniciaJogo = true;
         threadPlayer1.boolIniciaJogo = true;
-        threadPlayer2.boolIniciaJogo = true;
     }
 
     static public void main(String[] args) throws InterruptedException {
