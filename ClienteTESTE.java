@@ -1307,7 +1307,7 @@ class ClienteTESTE extends JFrame {
                             break;
                     }
                     ///////
-                    sleep(3000);
+                   // sleep(25);
                 }
             } catch (Exception eRef) {
                 System.out.println("Erro no LeituraDoFluxo: " + eRef);

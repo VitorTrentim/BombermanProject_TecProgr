@@ -965,11 +965,11 @@ class ServidorTESTE extends Thread {
         PlayerThreadEnvia threadEnvia;
         PlayerThreadRecebe threadRecebe;
 
-        PlayerThread2(Socket socketRecebido, int id) {
+        PlayerThread2(Socket socketRecebido, int id, DataInputStream streamRecebeDoCliente, DataOutputStream streamEnviaAoCliente) {
             try {
                 this.playerSocket = socketRecebido;
-                this.streamRecebeDoCliente = new DataInputStream(socketRecebido.getInputStream());
-                this.streamEnviaAoCliente = new DataOutputStream(socketRecebido.getOutputStream());
+                this.streamRecebeDoCliente = streamRecebeDoCliente;
+                this.streamEnviaAoCliente = streamEnviaAoCliente;
                 this.id = id;
                 this.threadEnvia = new PlayerThreadEnvia(streamEnviaAoCliente, id);
                 this.threadRecebe = new PlayerThreadRecebe(streamRecebeDoCliente, id);
@@ -979,8 +979,8 @@ class ServidorTESTE extends Thread {
                 } else {
                     X = 860; Y=540;
                 }
-                threadEnvia.start();
                 threadRecebe.start();
+                threadEnvia.start();
             } catch (Exception erroPlayer) {
                 System.out.println("Erro (Player): " + erroPlayer);
             }
@@ -1305,9 +1305,10 @@ class ServidorTESTE extends Thread {
             // CONEXÃO 1
             System.out.println("Aguardando primeira conexao.");
             socketPlayer0 = serverSocket.accept();
-
+            DataInputStream in = new DataInputStream(socketPlayer0.getInputStream());
+            DataOutputStream out = new DataOutputStream(socketPlayer0.getOutputStream());
             System.out.println("Player 1 conectado. Enviando o clientSocket ao PlayerThread.");
-            threadPlayer0 = new PlayerThread2(socketPlayer0, 0);
+            threadPlayer0 = new PlayerThread2(socketPlayer0, 0, in, out);
         }
         catch(Exception e){
             System.out.println("Erro na conexao 1. - "+e);
@@ -1319,8 +1320,10 @@ class ServidorTESTE extends Thread {
             // CONEXÃO 2
             System.out.println("Aguardando segunda conexao.");
             socketPlayer1 = serverSocket.accept();
+            DataInputStream in = new DataInputStream(socketPlayer1.getInputStream());
+            DataOutputStream out = new DataOutputStream(socketPlayer1.getOutputStream());
             System.out.println("Player 2 conectado. Enviando o clientSocket ao PlayerThread.");
-            threadPlayer1 = new PlayerThread2(socketPlayer1, 1);
+            threadPlayer1 = new PlayerThread2(socketPlayer1, 1, in, out);
         }
         catch(Exception e){
             System.out.println("Erro na conexao 2. - "+e);
