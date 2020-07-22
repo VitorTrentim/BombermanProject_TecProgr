@@ -396,8 +396,8 @@ class ClienteTESTE extends JFrame {
                
                for (i = 0; i < 2; i++){
                     if (arrayPlayers[i].boolPosicaoValidada){
-                        g.drawImage(arrayPlayers[i].personagem, arrayPlayers[i].getX(), arrayPlayers[i].getY(), 30, 50, this);
-                        g.drawRect(arrayPlayers[i].getX(), arrayPlayers[i].getY()+15, 30, 35);
+                        g.drawImage(arrayPlayers[i].personagem, arrayPlayers[i].X, arrayPlayers[i].Y, 30, 50, this);
+                        g.drawRect(arrayPlayers[i].X, arrayPlayers[i].Y+15, 30, 35);
                     }
                 }
 
@@ -1284,14 +1284,14 @@ class ClienteTESTE extends JFrame {
                     leitura = rede.streamRecebeDoServidor.readUTF();
                     leituraPartes = leitura.split(" ");
                     System.out.println("Player"+id+" LEITURA = "+leitura);
-                    while (!leituraPartes[0].equals("POS") || !leituraPartes[0].equals("BOM")) {
-                        sleep(25);
-                        leitura = rede.streamRecebeDoServidor.readUTF();
-                        leituraPartes = leitura.split(" ");
-                        System.out.println("Player"+id+" LEITURA = "+leitura);
-
-                        sleep(25);
-                    }
+//                    while (!leituraPartes[0].equals("POS") || !leituraPartes[0].equals("BOM")) {
+//                        sleep(25);
+//                        leitura = rede.streamRecebeDoServidor.readUTF();
+//                        leituraPartes = leitura.split(" ");
+//                        System.out.println("Player"+id+" LEITURA = "+leitura);
+//
+//                        sleep(25);
+//                    }
                     switch (leituraPartes[0]) {
                         case "POS":
                             System.out.println("Player"+id+" RECEBEU POS = "+leitura);
@@ -1307,7 +1307,7 @@ class ClienteTESTE extends JFrame {
                             break;
                     }
                     ///////
-                   // sleep(25);
+                   sleep(25);
                 }
             } catch (Exception eRef) {
                 System.out.println("Erro no LeituraDoFluxo: " + eRef);
@@ -1325,10 +1325,10 @@ class ClienteTESTE extends JFrame {
                     //synchronized (movimentoPlayerAtual) {
                     rede.streamEnviaAoServidor.writeUTF("POS "+id+" "+ arrayPlayers[id].X + " " + arrayPlayers[id].Y + " " + arrayPlayers[id].estado);
                     rede.streamEnviaAoServidor.flush();
-                    System.out.println("Player"+id+" ENVIOU POS = "+"POS "+id+" "+ arrayPlayers[id].X + " " + arrayPlayers[id].Y + " " + arrayPlayers[id].estado);
+                    System.out.println("Player"+id+" ENVIOU = "+"POS "+id+" "+ arrayPlayers[id].X + " " + arrayPlayers[id].Y + " " + arrayPlayers[id].estado);
                     //}
                     ///////
-                    sleep(3000);
+                    sleep(25);
                 }
             } catch (Exception eRef) {
                 System.out.println("Erro no EnvioDoFluxo: " + eRef);
