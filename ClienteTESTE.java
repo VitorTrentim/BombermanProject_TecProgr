@@ -1232,32 +1232,24 @@ class ClienteTESTE extends JFrame {
                             if (intersBombas(new Rectangle(arrayPlayers[id].X - arrayPlayers[id].velocidade, arrayPlayers[id].Y + 15, 30, 35)) && intersBlocosFixos(new Rectangle(arrayPlayers[id].X - arrayPlayers[id].velocidade, arrayPlayers[id].Y + 15, 30, 35), mult.blocosFixos) && intersBlocosQuebraveis(new Rectangle(arrayPlayers[id].X - arrayPlayers[id].velocidade, arrayPlayers[id].Y + 15, 30, 35), mult.arrayBlocosQuebraveis) && arrayPlayers[id].X >= 54) {
                                 arrayPlayers[id].X -= arrayPlayers[id].velocidade;
                             }
-
                             if (arrayPlayers[id].estado != ANDANDO_ESQUERDA && !arrayPlayers[id].moveDown && !arrayPlayers[id].moveUp) {
                                 arrayPlayers[id].estado = ANDANDO_ESQUERDA;
                             }
-
                         }
                         if (arrayPlayers[id].moveDown) {
                             if (intersBombas(new Rectangle(arrayPlayers[id].X, arrayPlayers[id].Y + arrayPlayers[id].velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(arrayPlayers[id].X, arrayPlayers[id].Y + arrayPlayers[id].velocidade + 15, 30, 35), mult.blocosFixos) && intersBlocosQuebraveis(new Rectangle(arrayPlayers[id].X, arrayPlayers[id].Y + arrayPlayers[id].velocidade + 15, 30, 35), mult.arrayBlocosQuebraveis) && arrayPlayers[id].Y <= 546) {
                                 arrayPlayers[id].Y += arrayPlayers[id].velocidade;
                             }
-
                             if (arrayPlayers[id].estado != ANDANDO_FRENTE) {
                                 arrayPlayers[id].estado = ANDANDO_FRENTE;
                             }
-
-
                         } else if (arrayPlayers[id].moveUp) {
                             if (intersBombas(new Rectangle(arrayPlayers[id].X, arrayPlayers[id].Y - arrayPlayers[id].velocidade + 15, 30, 35)) && intersBlocosFixos(new Rectangle(arrayPlayers[id].X, arrayPlayers[id].Y - arrayPlayers[id].velocidade + 15, 30, 35), mult.blocosFixos) && intersBlocosQuebraveis(new Rectangle(arrayPlayers[id].X, arrayPlayers[id].Y - arrayPlayers[id].velocidade + 15, 30, 35), mult.arrayBlocosQuebraveis) && arrayPlayers[id].Y >= 30) {
                                 arrayPlayers[id].Y -= arrayPlayers[id].velocidade;
                             }
-
                             if (arrayPlayers[id].estado != ANDANDO_COSTAS) {
                                 arrayPlayers[id].estado = ANDANDO_COSTAS;
                             }
-
-                            // }
                         }
                         if (!arrayPlayers[id].moveDown && !arrayPlayers[id].moveUp && !arrayPlayers[id].moveLeft && !arrayPlayers[id].moveRight) {
                             if (arrayPlayers[id].estado != PARADO) {
@@ -1301,6 +1293,20 @@ class ClienteTESTE extends JFrame {
                             arrayPlayers[AuxID].estado = Integer.parseInt(leituraPartes[4]);
                             System.out.println("Player"+id+" - Setting Player["+AuxID+"].X = "+Integer.parseInt(leituraPartes[2])+" Player["+AuxID+"].Y = "+Integer.parseInt(leituraPartes[3])+" Player["+AuxID+"].estado = "+Integer.parseInt(leituraPartes[4]));
                             //recebe:("POS "+id+" "+threadPlayer1.X+" "+threadPlayer1.Y+" "+threadPlayer1.estado)
+
+                            if (arrayPlayers[AuxID].estado == PARADO) {
+                                arrayPlayers[AuxID].personagem = arrayPlayers[AuxID].imagensPlayer[PARADO];
+                            } else if (arrayPlayers[AuxID].estado == ANDANDO_DIREITA) {
+                                arrayPlayers[AuxID].personagem = arrayPlayers[AuxID].imagensPlayer[ANDANDO_DIREITA];
+                            } else if (arrayPlayers[AuxID].estado == ANDANDO_ESQUERDA) {
+                                arrayPlayers[AuxID].personagem = arrayPlayers[AuxID].imagensPlayer[ANDANDO_ESQUERDA];
+                            } else if (arrayPlayers[AuxID].estado == ANDANDO_FRENTE) {
+                                arrayPlayers[AuxID].personagem = arrayPlayers[AuxID].imagensPlayer[ANDANDO_FRENTE];
+                            } else if (arrayPlayers[AuxID].estado == ANDANDO_COSTAS) {
+                                arrayPlayers[AuxID].personagem = arrayPlayers[AuxID].imagensPlayer[ANDANDO_COSTAS];
+                            } else {
+                                arrayPlayers[AuxID].personagem = arrayPlayers[AuxID].imagensPlayer[PARADO];
+                            }
                             break;
                         case "BOM":
                             System.out.println("Player"+id+" RECEBEU BOM = "+leitura);
