@@ -898,7 +898,7 @@ class ServidorT2 extends Thread {
                             }
                         }
 
-                        sleep(25);
+                        sleep(300); // inicial era 300
                     }
                 }
                 catch(NoSuchElementException e){

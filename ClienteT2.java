@@ -78,7 +78,7 @@ class ClienteT2 extends JFrame {
 
     //////////////////////////////////////////////////////
 
-    Timer repinta = new Timer(25, e -> {
+    Timer repinta = new Timer(50, e -> {
         repaint();
     });
 
@@ -1147,7 +1147,7 @@ class ClienteT2 extends JFrame {
                             }
                         }
                     }
-                    sleep(25);
+                    sleep(25); // aqui
                     repaint();
                 }
             } catch (Exception e){
@@ -1210,7 +1210,7 @@ class ClienteT2 extends JFrame {
                             break;
                     }
                     ///////
-                   sleep(25);
+                   sleep(25); // era 25
                 }
             } catch (Exception eRef) {
                 System.out.println("Erro no LeituraDoFluxo: " + eRef);
