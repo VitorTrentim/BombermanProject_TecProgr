@@ -18,11 +18,12 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Random;
 
-class ClienteT2 extends JFrame {
+class ClienteTESTE extends JFrame {
     Image[] arrayImagensBomba = new Image[21];
+    Bomba[] arrayBombas = new Bomba[10];
     /// Rede
     Rede rede;
-    boolean boolJogoComecou = false, boolJogoRodando = false;
+    boolean boolJogoComecou = false, boolJogoRodando = false, boolBotouBomba = false;
     String idString;
     int id = -1;
     LeituraDoFluxo threadLeitura = new LeituraDoFluxo();
@@ -44,7 +45,7 @@ class ClienteT2 extends JFrame {
     int indexItems = 0;
 
     //// DADOS BOMBAS
-    ArrayList<Bomba> arrayBombas = new ArrayList<Bomba>(10);
+//    ArrayList<Bomba> arrayBombas = new ArrayList<Bomba>(10);
     ArrayList<pontoExplosao> arrayExplosao = new ArrayList<pontoExplosao>(100); //Fogo da explosão da bomba
 
 
@@ -95,8 +96,8 @@ class ClienteT2 extends JFrame {
 
         Fase(){
             try {
-                arrayPlayers[0].X = 60; arrayPlayers[0].Y = 40; arrayPlayers[0].boolPosicaoValidada = true;
-                arrayPlayers[1].X = 860; arrayPlayers[1].Y = 540; arrayPlayers[1].boolPosicaoValidada = true;
+                arrayPlayers[0].X = 60; arrayPlayers[0].Y = 40;
+                arrayPlayers[1].X = 860; arrayPlayers[1].Y = 540;
                 try {
                     imagensAmbiente[FUNDO] = new ImageIcon(getClass().getResource("Resources/FaseMultiplayer/chao1.png")).getImage();
                     imagensAmbiente[BLOCO] = new ImageIcon("Resources/FaseMultiplayer/blocoFixo.png").getImage();
@@ -123,6 +124,12 @@ class ClienteT2 extends JFrame {
             setLayout(null);
             setPreferredSize(new Dimension(imagensAmbiente[FUNDO].getWidth(this), imagensAmbiente[FUNDO].getHeight(this)));
         }
+
+//        void funcStartaArrayBombas(){
+//            for(int i=0; i<10 ; i++){
+//                arrayBombas[i] = new Bomba();
+//            }
+//        }
 
         void funcAdcBlocosFixos(){
             try {
@@ -321,38 +328,30 @@ class ClienteT2 extends JFrame {
                 }
                 //System.out.println("draw a");
                 /// DESENHA AS BOMBAS
-                if(!arrayBombas.isEmpty()){
-                    System.out.println("a2");
-                    for(i = arrayBombas.size()-1; i >= 0 ; i--){
-                        System.out.println("a3");
-                        g.drawImage(arrayBombas.get(i).imageFrame, arrayBombas.get(i).x+13, arrayBombas.get(i).y+13, 25 ,25, this);
-                        arrayBombas.remove(i);
-                        if(arrayBombas.isEmpty()){
-                            break;
-                        }
+                for(i = 0; i < 10 ; i++){
+                    if(arrayBombas[i] != null && arrayBombas[i].existe){
+                        g.drawImage(arrayImagensBomba[arrayBombas[i].indexImage], arrayBombas[i].x+13, arrayBombas[i].y+13, 25 ,25, this);
                     }
                 }
 
                 /// DESENHA AS EXPLOSOES
-                if(!arrayExplosao.isEmpty()){
-                    for(i = arrayExplosao.size()-1; i >= 0 ; i--){
-                        if (arrayExplosao.get(i).tipoDeAnimacao==0){
-                            g.drawImage(explosao, arrayExplosao.get(i).x, arrayExplosao.get(i).y, this);
-                        }
-                        else{
-                            g.drawImage(explosao2, arrayExplosao.get(i).x, arrayExplosao.get(i).y, this);
-                        }
-                        arrayExplosao.remove(i);
-                        if(arrayExplosao.isEmpty())
-                            break;
-                    }
-                }
+//                if(!arrayExplosao.isEmpty()){
+//                    for(i = arrayExplosao.size()-1; i >= 0 ; i--){
+//                        if (arrayExplosao.get(i).tipoDeAnimacao==0){
+//                            g.drawImage(explosao, arrayExplosao.get(i).x, arrayExplosao.get(i).y, this);
+//                        }
+//                        else{
+//                            g.drawImage(explosao2, arrayExplosao.get(i).x, arrayExplosao.get(i).y, this);
+//                        }
+//                        arrayExplosao.remove(i);
+//                        if(arrayExplosao.isEmpty())
+//                            break;
+//                    }
+//                }
                
                for (i = 0; i < 2; i++){
-                    if (arrayPlayers[i].boolPosicaoValidada){
-                        g.drawImage(arrayPlayers[i].personagem, arrayPlayers[i].X, arrayPlayers[i].Y, 30, 50, this);
-                        g.drawRect(arrayPlayers[i].X, arrayPlayers[i].Y+15, 30, 35);
-                    }
+                    g.drawImage(arrayPlayers[i].personagem, arrayPlayers[i].X, arrayPlayers[i].Y, 30, 50, this);
+                    g.drawRect(arrayPlayers[i].X, arrayPlayers[i].Y+15, 30, 35);
                 }
 
                 if(barraSuperior.valorTempo <= 0){
@@ -446,14 +445,13 @@ class ClienteT2 extends JFrame {
     }
 
     class Bomba{
-        int x, y, dono, valorBombaSize;
-        Image imageFrame;
-        boolean boolBloqueandoPlayer = false;
+        int x, y, dono, valorBombaSize, indexImage;
+        boolean boolBloqueandoPlayer = false, existe = false;
 
         Bomba(int x, int y, int indexImage) {
             this.x = x;
             this.y = y;
-            this.imageFrame = arrayImagensBomba[indexImage];
+            this.indexImage = indexImage;
         }
     }
 
@@ -473,8 +471,6 @@ class ClienteT2 extends JFrame {
         Image personagem;
         int vida = 3, danoRecente = 0, velocidade = 4, qtdeItemBota, qtdeItemBomba, qtdeItemExplosao;
         boolean boolDanoRecente = false, boolStunned = false, moveRight = false, moveLeft = false, moveDown = false, moveUp = false;
-
-        boolean boolPosicaoValidada = false;
 
         Player(int tipoPersonagem){
             try{
@@ -918,8 +914,8 @@ class ClienteT2 extends JFrame {
         DataOutputStream streamEnviaAoServidor = null;
 
         boolean temDados = true;
-        ClienteT2 jogo;
-        public Rede(ClienteT2 jogo, String IP, int porto){
+        ClienteTESTE jogo;
+        public Rede(ClienteTESTE jogo, String IP, int porto){
             try {
                 this.jogo = jogo;
                 socket = new Socket(IP, porto);
@@ -938,7 +934,7 @@ class ClienteT2 extends JFrame {
         }
     }
 
-    ClienteT2(){
+    ClienteTESTE(){
         super("Bomb Your Way Out");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         getContentPane().setBackground(Color.black);
@@ -969,12 +965,12 @@ class ClienteT2 extends JFrame {
                         arrayPlayers[id].moveUp = true;
                     } else if (e.getKeyCode() == KeyEvent.VK_SPACE) {
                         try{
-                            System.out.println("Botou bomba.");
-                            //if(arrayPlayers[id].maxBombas)
-                            rede.streamEnviaAoServidor.writeUTF("BOM "+arrayPlayers[id].getX()+" "+arrayPlayers[id].getY()+" "+arrayPlayers[id].bombaSize);
-                        }
+                            System.out.println("Tentou botar bomba.");
+                            if(!boolBotouBomba)
+                                boolBotouBomba = true;
+                          }
                         catch(Exception ex){
-                            System.out.println("\nErro ao criar bomba: "+ex);
+                            System.out.println("\nErro ao enviar a bomba: "+ex);
                         }
                     }
                 }
@@ -1199,9 +1195,15 @@ class ClienteT2 extends JFrame {
                             }
                             break;
                         case "BOM":
-                            arrayBombas.add(new Bomba(Integer.parseInt(leituraPartes[1]), Integer.parseInt(leituraPartes[2]), Integer.parseInt(leituraPartes[3])));
-                            //recebe ("BOM "+arrayBombas.get(i).x+" "+arrayBombas.get(i).y+" "+arrayBombas.get(i).indexImage)
-                            System.out.println("Player"+id+" RECEBEU BOM = "+leitura+"]");
+                            AuxID = 1;
+                            for (int i = 0; i<10 ; i++){
+                                arrayBombas[i].x = Integer.parseInt(leituraPartes[AuxID++]);
+                                arrayBombas[i].y = Integer.parseInt(leituraPartes[AuxID++]);
+                                arrayBombas[i].indexImage = Integer.parseInt(leituraPartes[AuxID++]);
+                            }
+//                            arrayBombas.add(new Bomba(Integer.parseInt(leituraPartes[1]), Integer.parseInt(leituraPartes[2]), Integer.parseInt(leituraPartes[3])));
+//                            //recebe ("BOM "+arrayBombas.get(i).x+" "+arrayBombas.get(i).y+" "+arrayBombas.get(i).indexImage)
+//                            System.out.println("Player"+id+" RECEBEU BOM = "+leitura+"]");
                             break;
                         case "EXP":
                             arrayExplosao.add(new pontoExplosao(Integer.parseInt(leituraPartes[1]), Integer.parseInt(leituraPartes[2]), Integer.parseInt(leituraPartes[3])));
@@ -1230,6 +1232,12 @@ class ClienteT2 extends JFrame {
                     rede.streamEnviaAoServidor.flush();
                     System.out.println("Player"+id+" ENVIOU = "+"POS "+id+" "+ arrayPlayers[id].X + " " + arrayPlayers[id].Y + " " + arrayPlayers[id].estado);
                     //}
+                    System.out.println("asdasdasdasdasdasdasd");
+                    if(boolBotouBomba){
+                        rede.streamEnviaAoServidor.writeUTF("BOM "+arrayPlayers[id].getX()+" "+arrayPlayers[id].getY()+" "+arrayPlayers[id].bombaSize);
+                        boolBotouBomba = false;
+                    }
+
                     ///////
                     sleep(25);
                 }
@@ -1240,6 +1248,6 @@ class ClienteT2 extends JFrame {
     }
 
     static public void main(String[] args) throws InterruptedException {
-        new ClienteT2();
+        new ClienteTESTE();
     }
 }

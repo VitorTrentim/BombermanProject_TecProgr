@@ -26,7 +26,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.util.Scanner;
 
-class ServidorT2 extends Thread {
+class ServidorTESTE extends Thread {
     ArrayList<Rectangle> arrayBlocosQuebraveis;
     Rectangle[] blocosFixos;
     //// DADOS DE CONEXÃO
@@ -50,12 +50,13 @@ class ServidorT2 extends Thread {
     int indexItems = 0;
 
     //// DADOS BOMBAS
-    ArrayList<Bomba> arrayBombas = new ArrayList<>(10);
+    //ArrayList<Bomba> arrayBombas = new ArrayList<>(10);
+    Bomba[] arrayBombas = new Bomba[10];
     ArrayList<pontoBomba> arrayExplosao = new ArrayList<>(110); // Fogo da explosão da bomba
 
     //// DADOS GERAIS
     final int TEMPO_DA_FASE = 150;
-    boolean boolGameOver = false, boolLastBombaBlockPlayer = false;
+    boolean boolGameOver = false, boolLastBombaPLAYER0 = false, boolLastBombaPLAYER1 = false;
     float tempoCont;
     Timer tempo;
     //// DADOS DAS FASES
@@ -74,77 +75,91 @@ class ServidorT2 extends Thread {
                 indexItems = 0;
 
             //// Atualiza a imagem da bomba
-            if (arrayBombas.size() > 0) {
-                for (i = 0; i < arrayBombas.size(); i++) {
-                    arrayBombas.get(i).indexImage++;
+
+            for (i = 0; i < 10; i++) {
+                if (arrayBombas[i].existe)
+                    arrayBombas[i].indexImage++;
+            }
+
+
+            // Checa as bombas recém colocadas e quando elas irão bloquear os players
+            if (boolLastBombaPLAYER0) {
+                for(i=0 ; i<5 ; i++){
+                    if ( (i+1) != 5 && arrayBombas[i+1].existe)
+                        continue;
+                    if (!new Rectangle(threadPlayer0.X, threadPlayer0.Y + 15, 35, 40).intersects(arrayBombas[i].getHitBox())) {
+                        arrayBombas[i].boolBloqueandoPlayer = true;
+                        boolLastBombaPLAYER0 = false;
+                    }
+                    else {
+                        boolLastBombaPLAYER0 = true;
+                    }
                 }
             }
 
-            // Checa as bombas recém colocadas e quando elas irão bloquear os players
-            if (boolLastBombaBlockPlayer) {
-                if (!arrayBombas.isEmpty()) {
-                    if (!new Rectangle(threadPlayer0.X, threadPlayer0.Y + 15, 35, 40).intersects(arrayBombas.get(arrayBombas.size() - 1).getHitBox())) {
-                    arrayBombas.get(arrayBombas.size() - 1).boolBloqueandoPlayer = true;
-                    boolLastBombaBlockPlayer = false;
+            if(boolLastBombaPLAYER1){
+                for(i=5 ; i<10 ; i++){
+                    if ( (i+1) != 9 && arrayBombas[i+1].existe)
+                        continue;
+                    if (!new Rectangle(threadPlayer1.X, threadPlayer1.Y + 15, 35, 40).intersects(arrayBombas[i].getHitBox())) {
+                        arrayBombas[i].boolBloqueandoPlayer = true;
+                        boolLastBombaPLAYER1 = false;
+                        break;
                     }
-                    else if (!new Rectangle(threadPlayer1.X, threadPlayer1.Y + 15, 35, 40).intersects(arrayBombas.get(arrayBombas.size() - 1).getHitBox())) {
-                        arrayBombas.get(arrayBombas.size() - 1).boolBloqueandoPlayer = true;
-                        boolLastBombaBlockPlayer = false;
+                    else {
+                        boolLastBombaPLAYER1 = true;
                     }
-                } else {
-                    boolLastBombaBlockPlayer = false;
                 }
             }
 
             System.out.println("UM");
             /// EXPLODE AS BOMBAS
-            if(arrayBombas.size()>0){
-                for(i = 0; i < arrayBombas.size(); i++){
-                    if(arrayBombas.get(i).indexImage==99) {
-                        funcExplodeBomba(arrayBombas.get(i));
-                        arrayBombas.remove(arrayBombas.get(i));
-                        if(arrayBombas.isEmpty())
-                            break;
+            for(i = 0; i < 10 ; i++){
+                if (arrayBombas[i].existe){
+                    if(arrayBombas[i].indexImage==99) {
+                        funcExplodeBomba(arrayBombas[i]);
+                        arrayBombas[i].existe = false;
                     }
                 }
             }
+
 
             System.out.println("DOIS");
-            /// CALCULO DAS EXPLOSOES
-            if(arrayExplosao.size()>0){
-                for(i = 0; i < arrayExplosao.size(); i++){
-
-                    System.out.println("AA");
-                    //Checa colisao explosao com outra bomba
-                    for(int j=0; j < arrayBombas.size();j++){
-                        if(arrayExplosao.get(i).hitBox.intersects(arrayBombas.get(j).getHitBox())){
-                            funcExplodeBomba(arrayBombas.get(j));
-                            arrayBombas.remove(j);
-                        }
-                        if (arrayBombas.isEmpty())
-                            break;
-                    }
-                    System.out.println("BB");
-                    // Checa colisao da explosao com os players
-                    if(!threadPlayer0.boolDanoRecente && arrayExplosao.get(i).hitBox.intersects(threadPlayer0.getHitBox())) {
-                        threadPlayer0.danificado();
-                    }
-                    if(!threadPlayer1.boolDanoRecente && arrayExplosao.get(i).hitBox.intersects(threadPlayer1.getHitBox())) {
-                        threadPlayer1.danificado();
-                    }
-
-                    arrayExplosao.get(i).holdDraw--;
-
-                    if(arrayExplosao.get(i).holdDraw<0){ //Checa a colisao da explosão com os blocos quebraveis
-                        for(int j=0; j<arrayBlocosQuebraveis.size();j++){
-                            if((arrayExplosao.get(i).hitBox.intersects(arrayBlocosQuebraveis.get(j)))){
-                                arrayBlocosQuebraveis.remove(j); // Remove os blocos quebraveis
-                            }
-                        }
-                        arrayExplosao.remove(i);
-                    }
-                }
-            }
+//            /// CALCULO DAS EXPLOSOES
+//            if(arrayExplosao.size()>0){
+//                for(i = 0; i < arrayExplosao.size(); i++){
+//
+//                    System.out.println("AA");
+//                    //Checa colisao explosao com outra bomba
+//                    for(int j=0; j < arrayBombas.size();j++){
+//                        if(arrayExplosao.get(i).hitBox.intersects(arrayBombas.get(j).getHitBox())){
+//                            funcExplodeBomba(arrayBombas.get(j));
+//                            arrayBombas.remove(j);
+//                        }
+//                        if (arrayBombas.isEmpty())
+//                            break;
+//                    }
+//                    System.out.println("BB");
+//                    // Checa colisao da explosao com os players
+//                    if(!threadPlayer0.boolDanoRecente && arrayExplosao.get(i).hitBox.intersects(threadPlayer0.getHitBox())) {
+//                        threadPlayer0.danificado();
+//                    }
+//                    if(!threadPlayer1.boolDanoRecente && arrayExplosao.get(i).hitBox.intersects(threadPlayer1.getHitBox())) {
+//                        threadPlayer1.danificado();
+//                    }
+//
+//                    arrayExplosao.get(i).holdDraw--;
+//
+//                    if(arrayExplosao.get(i).holdDraw<0){ //Checa a colisao da explosão com os blocos quebraveis
+//                        for(int j=0; j<arrayBlocosQuebraveis.size();j++){
+//                            if((arrayExplosao.get(i).hitBox.intersects(arrayBlocosQuebraveis.get(j)))){
+//                                arrayBlocosQuebraveis.remove(j); // Remove os blocos quebraveis
+//                            }
+//                        }
+//                        arrayExplosao.remove(i);
+//                    }
+//                }
+//            }
 
         } catch (Exception eRef) {
             System.out.println("Erro no refreshModels: " + eRef);
@@ -663,11 +678,12 @@ class ServidorT2 extends Thread {
         int x, y, valorBombaSize, indexImage = 0, dono;
         Image[] arrayImagensBomba;
         Rectangle hitBox;
-        boolean boolBloqueandoPlayer = false;
+        boolean boolBloqueandoPlayer = false, existe = false;
 
-        Bomba(int x, int y, int bombaSize) {
+        Bomba(int x, int y, int bombaSize, int dono) { //dono = ID
             carregaImagens();
             valorBombaSize = bombaSize;
+            this.existe = true;
             // Setar o bombaY no centro dos espaços
             if (y < 310) { // Divisão do Y na metade para possivelmente acelerar a chegada do if correspondente, como uma busca binária no início
                 if (y >= 25 && y <= 60)
@@ -735,7 +751,10 @@ class ServidorT2 extends Thread {
                     this.x = 850;
             }
             hitBox = new Rectangle(this.x + 12, this.y + 12, 26, 26);
-            boolLastBombaBlockPlayer = true;
+            if(dono == 0)
+                boolLastBombaPLAYER0 = true;
+            else
+                boolLastBombaPLAYER1 = true;
         }
 
         public Rectangle getHitBox() {
@@ -810,7 +829,7 @@ class ServidorT2 extends Thread {
         boolean boolTrocandoDados = false, boolIniciaJogo = false;
         String leitura;
         String[] leituraPartes;
-        int bombasAtivas=0;
+        int bombasAtivas;
 
         PlayerThreadEnvia threadEnvia;
         PlayerThreadRecebe threadRecebe;
@@ -826,8 +845,10 @@ class ServidorT2 extends Thread {
 
                 if(id == 0){
                     X = 60; Y = 40;
+                    bombasAtivas = 0;
                 } else {
                     X = 860; Y=540;
+                    bombasAtivas = 5;
                 }
                 threadRecebe.start();
                 threadEnvia.start();
@@ -840,6 +861,7 @@ class ServidorT2 extends Thread {
         class PlayerThreadEnvia extends Thread{
             DataOutputStream os;
             int id;
+            String stringArrayBombas;
 
             public PlayerThreadEnvia(DataOutputStream os, int id){
                 this.id = id;
@@ -876,34 +898,56 @@ class ServidorT2 extends Thread {
                             System.out.println("ThreadPlayer"+id+" ENVIA: POS "+"0 "+threadPlayer0.X+" "+threadPlayer0.Y+" "+threadPlayer0.estado);
                         }
 
-                        //envia ao cliente o array das bombas
-                        if(!arrayBombas.isEmpty()){
-                            for(int i=0 ; i<arrayBombas.size() ; i++){
-                                os.writeUTF("BOM "+arrayBombas.get(i).x+" "+arrayBombas.get(i).y+" "+arrayBombas.get(i).indexImage);
-                                os.flush();
-                                System.out.println("ThreadPlayer"+id+" Envia: arrayBombas");
-                                if(arrayBombas.isEmpty())
-                                    break;
-                            }
+                        System.out.println("STEP 1");
+                        stringArrayBombas = "BOM ";
+
+                        System.out.println("STEP 2");
+                        for(int i = 0 ; i < 10 ; i++){
+                            if(arrayBombas[i] == null)
+                                continue;
+                            System.out.println("STEP 9999");
+                            stringArrayBombas.concat(Integer.toString(i));
+                            stringArrayBombas.concat(" ");
+                            stringArrayBombas.concat(Integer.toString(arrayBombas[i].x));
+                            stringArrayBombas.concat(" ");
+                            stringArrayBombas.concat(Integer.toString(arrayBombas[i].y));
+                            stringArrayBombas.concat(" ");
+                            stringArrayBombas.concat(Integer.toString(arrayBombas[i].indexImage));
                         }
+                        System.out.println("SAIU");
+                        //envia ao cliente o array das bombas
+                        os.writeUTF(stringArrayBombas);
+                        os.flush();
+                        System.out.println("ThreadPlayer"+id+" Envia: arrayBombas");
+//                        if(!arrayBombas.isEmpty()){
+//                            for(int i=0 ; i<arrayBombas.size() ; i++){
+//
+//                                if(arrayBombas.isEmpty())
+//                                    break;
+//                            }
+//                        }
 
                         //envia ao cliente o array das bombas
-                        if(!arrayExplosao.isEmpty()){
-                            for(int i=0 ; i<arrayExplosao.size() ; i++){
-                                os.writeUTF("EXP "+arrayExplosao.get(i).x+" "+arrayExplosao.get(i).y+" "+arrayExplosao.get(i).tipoDeAnimacao);
-                                os.flush();
-                                System.out.println("ThreadPlayer"+id+" Envia: arrayBombas");
-                                if(arrayExplosao.isEmpty())
-                                    break;
-                            }
-                        }
+//                        if(!arrayExplosao.isEmpty()){
+//                            for(int i=0 ; i<arrayExplosao.size() ; i++){
+//                                os.writeUTF("EXP "+arrayExplosao.get(i).x+" "+arrayExplosao.get(i).y+" "+arrayExplosao.get(i).tipoDeAnimacao);
+//                                os.flush();
+//                                System.out.println("ThreadPlayer"+id+" Envia: arrayBombas");
+//                                if(arrayExplosao.isEmpty())
+//                                    break;
+//                            }
+//                        }
 
                         sleep(300); // inicial era 300
                     }
                 }
                 catch(NoSuchElementException e){
+                    System.out.println("Erro no PlayerThreadEnvia"+id+" : " + e);
+                    System.out.println(e.getMessage());
                 }
                 catch(Exception ex){
+                    System.out.println("Erro no PlayerThreadEnvia"+id+" " + ex);
+                    System.out.println(ex.getMessage());
                 }
 
                 try {
@@ -953,11 +997,18 @@ class ServidorT2 extends Thread {
                                 break;
                             case "BOM":
                                 System.out.println("ThreadPlayer"+id+" RECEBEU ["+leitura+"]");
-                                if(bombasAtivas<maxBombas){
-                                    bombasAtivas++;
-                                    arrayBombas.add(new Bomba(Integer.parseInt(leituraPartes[1]), Integer.parseInt(leituraPartes[2]), Integer.parseInt(leituraPartes[3])));
-                                    //recebe:("BOM "+arrayPlayers[id-1].getX()+" "+arrayPlayers[id-1].getY()+" "+arrayPlayers[id-1].bombaSize)
+                                if(id == 0){ // vai de 0 a 4
+                                    if(bombasAtivas<4){
+                                        arrayBombas[bombasAtivas++] = new Bomba(Integer.parseInt(leituraPartes[1]), Integer.parseInt(leituraPartes[2]), Integer.parseInt(leituraPartes[3]), id);
+                                    }
+                                  }
+                                else { // vai de 5 a 9
+                                    if(bombasAtivas<9){
+                                        arrayBombas[bombasAtivas++] = new Bomba(Integer.parseInt(leituraPartes[1]), Integer.parseInt(leituraPartes[2]), Integer.parseInt(leituraPartes[3]), id);
+                                    }
                                 }
+                               //recebe:("BOM "+arrayPlayers[id-1].getX()+" "+arrayPlayers[id-1].getY()+" "+arrayPlayers[id-1].bombaSize)
+
                                 break;
                             case "EXP":
                                 System.out.println("ThreadPlayer"+id+" RECEBEU EXP = " + leitura);
@@ -1098,7 +1149,7 @@ class ServidorT2 extends Thread {
         }
     }
 
-    ServidorT2() {
+    ServidorTESTE() {
         try{
             funcAdcBlocosFixos();
             funcAdcBlocosQuebraveis();
@@ -1143,6 +1194,6 @@ class ServidorT2 extends Thread {
     }
 
     static public void main(String[] args) throws InterruptedException {
-        new ServidorT2();
+        new ServidorTESTE();
     }
 }
