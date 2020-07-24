@@ -98,6 +98,9 @@ class ClienteTESTE extends JFrame {
             try {
                 arrayPlayers[0].X = 60; arrayPlayers[0].Y = 40;
                 arrayPlayers[1].X = 860; arrayPlayers[1].Y = 540;
+                for (int i = 0; i < 10; i++){
+                    arrayBombas[i] = new Bomba();
+                }
                 try {
                     imagensAmbiente[FUNDO] = new ImageIcon(getClass().getResource("Resources/FaseMultiplayer/chao1.png")).getImage();
                     imagensAmbiente[BLOCO] = new ImageIcon("Resources/FaseMultiplayer/blocoFixo.png").getImage();
@@ -125,11 +128,11 @@ class ClienteTESTE extends JFrame {
             setPreferredSize(new Dimension(imagensAmbiente[FUNDO].getWidth(this), imagensAmbiente[FUNDO].getHeight(this)));
         }
 
-//        void funcStartaArrayBombas(){
-//            for(int i=0; i<10 ; i++){
-//                arrayBombas[i] = new Bomba();
-//            }
-//        }
+       /* void funcStartaArrayBombas(){
+            for(int i=0; i<10 ; i++){
+                arrayBombas[i] = new Bomba(1000,1000,5);
+            }
+        } */
 
         void funcAdcBlocosFixos(){
             try {
@@ -448,6 +451,10 @@ class ClienteTESTE extends JFrame {
         int x, y, dono, valorBombaSize, indexImage;
         boolean boolBloqueandoPlayer = false, existe = false;
 
+       Bomba (){
+
+       }
+       
         Bomba(int x, int y, int indexImage) {
             this.x = x;
             this.y = y;
@@ -1162,14 +1169,6 @@ class ClienteTESTE extends JFrame {
                     leitura = rede.streamRecebeDoServidor.readUTF();
                     leituraPartes = leitura.split(" ");
                     System.out.println("Player"+id+" LEITURA = "+leitura);
-//                    while (!leituraPartes[0].equals("POS") || !leituraPartes[0].equals("BOM")) {
-//                        sleep(25);
-//                        leitura = rede.streamRecebeDoServidor.readUTF();
-//                        leituraPartes = leitura.split(" ");
-//                        System.out.println("Player"+id+" LEITURA = "+leitura);
-//
-//                        sleep(25);
-//                    }
                     switch (leituraPartes[0]) {
                         case "POS":
                             System.out.println("Player"+id+" RECEBEU POS = "+leitura);
@@ -1204,6 +1203,7 @@ class ClienteTESTE extends JFrame {
 //                            arrayBombas.add(new Bomba(Integer.parseInt(leituraPartes[1]), Integer.parseInt(leituraPartes[2]), Integer.parseInt(leituraPartes[3])));
 //                            //recebe ("BOM "+arrayBombas.get(i).x+" "+arrayBombas.get(i).y+" "+arrayBombas.get(i).indexImage)
 //                            System.out.println("Player"+id+" RECEBEU BOM = "+leitura+"]");
+                            System.out.println("Player"+id+" RECEBEU BOM = "+leitura+"]");
                             break;
                         case "EXP":
                             arrayExplosao.add(new pontoExplosao(Integer.parseInt(leituraPartes[1]), Integer.parseInt(leituraPartes[2]), Integer.parseInt(leituraPartes[3])));
@@ -1237,7 +1237,7 @@ class ClienteTESTE extends JFrame {
                         rede.streamEnviaAoServidor.writeUTF("BOM "+arrayPlayers[id].getX()+" "+arrayPlayers[id].getY()+" "+arrayPlayers[id].bombaSize);
                         boolBotouBomba = false;
                     }
-
+                    System.out.println("BOM "+arrayPlayers[id].getX()+" "+arrayPlayers[id].getY()+" "+arrayPlayers[id].bombaSize);
                     ///////
                     sleep(25);
                 }

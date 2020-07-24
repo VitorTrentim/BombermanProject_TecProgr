@@ -31,6 +31,7 @@ class ServidorTESTE extends Thread {
     Rectangle[] blocosFixos;
     //// DADOS DE CONEXÃO
     int PORTO = 12345;
+
     ServerSocket serverSocket = null;
     Socket socketPlayer0, socketPlayer1;
     //// DADOS PLAYER
@@ -75,54 +76,59 @@ class ServidorTESTE extends Thread {
                 indexItems = 0;
 
             //// Atualiza a imagem da bomba
-
-            for (i = 0; i < 10; i++) {
-                if (arrayBombas[i].existe)
-                    arrayBombas[i].indexImage++;
+            if (arrayBombas.length > 0){
+                for (i = 0; i < 10; i++) {
+                    if (arrayBombas[i].existe)
+                        arrayBombas[i].indexImage++;
+                }
             }
+            
 
 
             // Checa as bombas recém colocadas e quando elas irão bloquear os players
-            if (boolLastBombaPLAYER0) {
-                for(i=0 ; i<5 ; i++){
-                    if ( (i+1) != 5 && arrayBombas[i+1].existe)
-                        continue;
-                    if (!new Rectangle(threadPlayer0.X, threadPlayer0.Y + 15, 35, 40).intersects(arrayBombas[i].getHitBox())) {
-                        arrayBombas[i].boolBloqueandoPlayer = true;
-                        boolLastBombaPLAYER0 = false;
-                    }
-                    else {
-                        boolLastBombaPLAYER0 = true;
-                    }
-                }
-            }
-
-            if(boolLastBombaPLAYER1){
-                for(i=5 ; i<10 ; i++){
-                    if ( (i+1) != 9 && arrayBombas[i+1].existe)
-                        continue;
-                    if (!new Rectangle(threadPlayer1.X, threadPlayer1.Y + 15, 35, 40).intersects(arrayBombas[i].getHitBox())) {
-                        arrayBombas[i].boolBloqueandoPlayer = true;
-                        boolLastBombaPLAYER1 = false;
-                        break;
-                    }
-                    else {
-                        boolLastBombaPLAYER1 = true;
+            if (arrayBombas.length > 0){
+                if (boolLastBombaPLAYER0) {
+                    for(i=0 ; i<5 ; i++){
+                        if ( (i+1) != 5 && arrayBombas[i+1].existe)
+                            continue;
+                        if (!new Rectangle(threadPlayer0.X, threadPlayer0.Y + 15, 35, 40).intersects(arrayBombas[i].getHitBox())) {
+                            arrayBombas[i].boolBloqueandoPlayer = true;
+                            boolLastBombaPLAYER0 = false;
+                        }
+                        else {
+                            boolLastBombaPLAYER0 = true;
+                        }
                     }
                 }
-            }
-
+        }
+            if (arrayBombas.length > 0){
+                if(boolLastBombaPLAYER1){
+                        for(i=5 ; i<10 ; i++){
+                            if ( (i+1) != 9 && arrayBombas[i+1].existe)
+                                continue;
+                            if (!new Rectangle(threadPlayer1.X, threadPlayer1.Y + 15, 35, 40).intersects(arrayBombas[i].getHitBox())) {
+                                arrayBombas[i].boolBloqueandoPlayer = true;
+                                boolLastBombaPLAYER1 = false;
+                                break;
+                            }
+                            else {
+                                boolLastBombaPLAYER1 = true;
+                            }
+                        }
+                    }
+             }
             System.out.println("UM");
             /// EXPLODE AS BOMBAS
-            for(i = 0; i < 10 ; i++){
-                if (arrayBombas[i].existe){
-                    if(arrayBombas[i].indexImage==99) {
-                        funcExplodeBomba(arrayBombas[i]);
-                        arrayBombas[i].existe = false;
+            if (arrayBombas.length > 0){
+                for(i = 0; i < 10 ; i++){
+                    if (arrayBombas[i].existe){
+                        if(arrayBombas[i].indexImage==9) {
+                            funcExplodeBomba(arrayBombas[i]);
+                            arrayBombas[i].existe = false;
+                        }
                     }
                 }
             }
-
 
             System.out.println("DOIS");
 //            /// CALCULO DAS EXPLOSOES
@@ -652,10 +658,10 @@ class ServidorTESTE extends Thread {
                 break;
             }
         }
-        if(bomba.dono == 0)
-            threadPlayer0.bombasAtivas--;
-        else
-            threadPlayer1.bombasAtivas--;
+        if(bomba.dono == 0 || threadPlayer0.bombasAtivasPlayer1 == 4)
+            threadPlayer0.bombasAtivasPlayer1--;
+        if (bomba.dono == 1 || threadPlayer1.bombasAtivasPlayer2 == 9)
+            threadPlayer1.bombasAtivasPlayer2--;
     }
 
     static class pontoBomba extends Point {
@@ -680,7 +686,12 @@ class ServidorTESTE extends Thread {
         Rectangle hitBox;
         boolean boolBloqueandoPlayer = false, existe = false;
 
-        Bomba(int x, int y, int bombaSize, int dono) { //dono = ID
+        Bomba (int x, int y){ // Construtor vazio para instanciar o objeto Bomba
+             this.x = x;
+             this.y = y;                              // talvez resolva o nullPointer
+        }
+        
+        Bomba(int x, int y, int bombaSize, int id) { //dono = ID
             carregaImagens();
             valorBombaSize = bombaSize;
             this.existe = true;
@@ -829,7 +840,7 @@ class ServidorTESTE extends Thread {
         boolean boolTrocandoDados = false, boolIniciaJogo = false;
         String leitura;
         String[] leituraPartes;
-        int bombasAtivas;
+        int bombasAtivasPlayer1, bombasAtivasPlayer2;
 
         PlayerThreadEnvia threadEnvia;
         PlayerThreadRecebe threadRecebe;
@@ -842,13 +853,15 @@ class ServidorTESTE extends Thread {
                 this.id = id;
                 this.threadEnvia = new PlayerThreadEnvia(streamEnviaAoCliente, id);
                 this.threadRecebe = new PlayerThreadRecebe(streamRecebeDoCliente, id);
-
+                for (int i = 0; i < 10; i++){
+                    arrayBombas[i] = new Bomba(0,0);
+                }
                 if(id == 0){
                     X = 60; Y = 40;
-                    bombasAtivas = 0;
+                    bombasAtivasPlayer1 = 0;
                 } else {
                     X = 860; Y=540;
-                    bombasAtivas = 5;
+                    bombasAtivasPlayer2 = 5;
                 }
                 threadRecebe.start();
                 threadEnvia.start();
@@ -902,20 +915,102 @@ class ServidorTESTE extends Thread {
                         stringArrayBombas = "BOM ";
 
                         System.out.println("STEP 2");
-                        for(int i = 0 ; i < 10 ; i++){
+                     /*   for(int i = 0 ; i < 10 ; i++){
                             if(arrayBombas[i] == null)
                                 continue;
                             System.out.println("STEP 9999");
-                            stringArrayBombas.concat(Integer.toString(i));
+                            stringArrayBombas.concat(Integer.toString(0));
                             stringArrayBombas.concat(" ");
-                            stringArrayBombas.concat(Integer.toString(arrayBombas[i].x));
+                            stringArrayBombas.concat(Integer.toString(arrayBombas[0].x));
                             stringArrayBombas.concat(" ");
-                            stringArrayBombas.concat(Integer.toString(arrayBombas[i].y));
+                            stringArrayBombas.concat(Integer.toString(arrayBombas[0].y));
                             stringArrayBombas.concat(" ");
-                            stringArrayBombas.concat(Integer.toString(arrayBombas[i].indexImage));
+                            stringArrayBombas.concat(Integer.toString(arrayBombas[0].indexImage));
+                        } */
+                            if (arrayBombas[0] != null){
+                                stringArrayBombas.concat(Integer.toString(0));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[0].x));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[0].y));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[0].indexImage));
+                            }
+                            if (arrayBombas[1] != null){
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[1].x));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[1].y));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[1].indexImage));
+                                stringArrayBombas.concat(" ");
+                            }
+                            if (arrayBombas[2] != null){
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[2].x));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[2].y));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[2].indexImage));
+                                stringArrayBombas.concat(" ");
+                            }
+                            if (arrayBombas[3] != null){
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[3].x));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[3].y));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[3].indexImage));
+                                stringArrayBombas.concat(" ");
+                            }
+                            if (arrayBombas[4] != null){
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[4].x));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[4].y));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[4].indexImage));
+                                stringArrayBombas.concat(" ");
+                            }
+                            if (arrayBombas[5] != null){
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[5].x));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[5].y));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[5].indexImage));
+                                stringArrayBombas.concat(" ");
+                            }
+                            if (arrayBombas[6] != null){
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[6].x));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[6].y));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[6].indexImage));
+                                stringArrayBombas.concat(" ");
+                            }
+                            if (arrayBombas[7] != null){
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[7].x));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[7].y));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[7].indexImage));
+                                stringArrayBombas.concat(" ");
+                            }
+                            if (arrayBombas[8] != null){
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[8].x));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[8].y));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[8].indexImage));
+                                stringArrayBombas.concat(" ");
+                            }
+                            if (arrayBombas[9] != null){
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[9].x));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[9].y));
+                                stringArrayBombas.concat(" ");
+                                stringArrayBombas.concat(Integer.toString(arrayBombas[9].indexImage));
                         }
                         System.out.println("SAIU");
                         //envia ao cliente o array das bombas
+                        System.out.println("OLHA AQUI: " + stringArrayBombas);
                         os.writeUTF(stringArrayBombas);
                         os.flush();
                         System.out.println("ThreadPlayer"+id+" Envia: arrayBombas");
@@ -963,7 +1058,8 @@ class ServidorTESTE extends Thread {
 
         class PlayerThreadRecebe extends Thread{
             DataInputStream is;
-            int auxID, id;
+            int id;
+            int auxID;
 
             public PlayerThreadRecebe (DataInputStream is, int id){
                 this.id = id;
@@ -998,16 +1094,20 @@ class ServidorTESTE extends Thread {
                             case "BOM":
                                 System.out.println("ThreadPlayer"+id+" RECEBEU ["+leitura+"]");
                                 if(id == 0){ // vai de 0 a 4
-                                    if(bombasAtivas<4){
-                                        arrayBombas[bombasAtivas++] = new Bomba(Integer.parseInt(leituraPartes[1]), Integer.parseInt(leituraPartes[2]), Integer.parseInt(leituraPartes[3]), id);
+                                    if(bombasAtivasPlayer1<4){
+                                        arrayBombas[bombasAtivasPlayer1++] = new Bomba(Integer.parseInt(leituraPartes[1]), Integer.parseInt(leituraPartes[2]), Integer.parseInt(leituraPartes[3]), id);
+                                        System.out.println("RECEBEU BOMBA DO CLIENTE");
+                                        System.out.println(leituraPartes[0] +" "+leituraPartes[1] + " " + leituraPartes[2] + " " + leituraPartes[3]);
                                     }
                                   }
                                 else { // vai de 5 a 9
-                                    if(bombasAtivas<9){
-                                        arrayBombas[bombasAtivas++] = new Bomba(Integer.parseInt(leituraPartes[1]), Integer.parseInt(leituraPartes[2]), Integer.parseInt(leituraPartes[3]), id);
+                                    if(bombasAtivasPlayer2<9){
+                                        arrayBombas[bombasAtivasPlayer2++] = new Bomba(Integer.parseInt(leituraPartes[1]), Integer.parseInt(leituraPartes[2]), Integer.parseInt(leituraPartes[3]), id);
+                                        System.out.println("RECEBEU BOMBA DO CLIENTE");
+                                        System.out.println(leituraPartes[0] +" "+leituraPartes[1] + " " + leituraPartes[2] + " " + leituraPartes[3]);
                                     }
                                 }
-                               //recebe:("BOM "+arrayPlayers[id-1].getX()+" "+arrayPlayers[id-1].getY()+" "+arrayPlayers[id-1].bombaSize)
+                               
 
                                 break;
                             case "EXP":
@@ -1182,8 +1282,8 @@ class ServidorTESTE extends Thread {
             System.out.println("Erro na conexao 2. - "+e);
             System.exit(1);
         }
-        refreshModels.start();
         desbloqueiaThreads();
+        refreshModels.start();
 }
 
     void desbloqueiaThreads(){
